@@ -40,10 +40,16 @@
     - name: Install MS product repository
       apt:
         deb: /tmp/packages-microsoft-prod.deb
-    - name: Import the GPG keys of the Jenkins repository
-      apt_key:
-        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
-        state: present
+    - name: Ensure keyrings directory exists
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+    - name: Download Jenkins GPG key
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+        dest: /etc/apt/keyrings/jenkins-keyring.asc
+        mode: "0644"
     - name: Add the Jenkins repository to the system
       lineinfile:
         path: /etc/apt/sources.list.d/jenkins.list
@@ -52,7 +58,8 @@
         group: root
         mode: "0644"
         create: yes
-        line: "deb https://pkg.jenkins.io/debian-stable binary/"
+        regexp: '^deb .*https://pkg\.jenkins\.io/debian-stable binary/'
+        line: "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
     - name: Install apt packages
       apt:
         name:
