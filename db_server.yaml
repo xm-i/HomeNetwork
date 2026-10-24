@@ -19,12 +19,19 @@
           - postgresql-client
           - python3-psycopg2
           - bzip2
+          - prometheus-node-exporter
         state: present
         update_cache: yes
 
     - name: Ensure PostgreSQL service is enabled and started
       service:
         name: postgresql
+        enabled: yes
+        state: started
+
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
         enabled: yes
         state: started
 

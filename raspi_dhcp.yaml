@@ -11,6 +11,15 @@
         name: dnsmasq
         update_cache: yes
         state: present
+    - name: Install prometheus-node-exporter
+      apt:
+        name: prometheus-node-exporter
+        state: present
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
     - name: Copy dnsmasq.conf
       copy:
         src: ./raspi_dhcp/dnsmasq/dnsmasq.conf

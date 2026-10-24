@@ -8,7 +8,16 @@
       timezone:
         name: Asia/Tokyo
 
-    - name: Install Java
+    - name: Install Java and node_exporter
       apt:
-        name: openjdk-11-jdk
+        name:
+          - openjdk-11-jdk
+          - prometheus-node-exporter
         state: present
+        update_cache: yes
+
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started

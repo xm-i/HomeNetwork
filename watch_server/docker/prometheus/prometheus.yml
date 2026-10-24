@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node'
+    static_configs:
+      - targets:
+          - 'watch-server.localnet:9100'
+          - 'home-server.localnet:9100'
+          - 'db-server.localnet:9100'
+          - 'batch-server.localnet:9100'
+          - 'raspi.localnet:9100'
+          - 'aqua-raspi.localnet:9100'
+          # - 'recorder.localnet:9100'
+        labels:
+          environment: 'production'

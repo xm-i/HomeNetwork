@@ -62,8 +62,14 @@
           - ansible
           - nginx
           - wakeonlan
+          - prometheus-node-exporter
         state: present
         update_cache: yes
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
     - name: Copy nginx.conf
       copy:
         src: ./home_server/nginx/sites-available/

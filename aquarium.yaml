@@ -47,6 +47,15 @@
         enabled: yes
       notify:
         - restart aqua_state_reporter
+    - name: Install prometheus-node-exporter
+      apt:
+        name: prometheus-node-exporter
+        state: present
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
   handlers:
     - name: restart aqua_state_reporter
       service: name=aqua_state_reporter state=restarted

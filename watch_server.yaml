@@ -6,34 +6,70 @@
     - name: Set timezone
       timezone:
         name: Asia/Tokyo
-    - name: mkdir
-      file: path={{ item.path }} state={{ item.state }} owner={{ item.owner }} group={{ item.group }} mode={{ item.mode }}
+
+    - name: Install apt packages
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+          - prometheus-node-exporter
+        state: present
+        update_cache: yes
+
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
+
+    - name: Ensure docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create docker directories
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+        mode: "{{ item.mode }}"
       with_items:
         - {
             path: /home/watch/docker,
-            state: directory,
             owner: watch,
             group: watch,
             mode: "0755",
           }
         - {
             path: /home/watch/docker/data/grafana,
-            state: directory,
             owner: watch,
             group: watch,
             mode: "0777",
           }
+        - {
+            path: /home/watch/docker/data/prometheus,
+            owner: watch,
+            group: watch,
+            mode: "0777",
+          }
+
     - name: Copy docker files
       copy:
         src: ./watch_server/docker/
         dest: /home/watch/docker/
-    - name: Install apt packages
-      apt:
-        name:
-          - docker-compose
-        state: present
-        update_cache: no
-    - name: docker-compose
-      docker_compose:
-        project_src: /home/watch/docker
-        state: present
+      notify:
+        - restart watch containers
+
+    - name: Run docker-compose
+      command: docker-compose up -d --remove-orphans
+      args:
+        chdir: /home/watch/docker
+      changed_when: false
+
+  handlers:
+    - name: restart watch containers
+      command: docker-compose up -d --force-recreate --remove-orphans
+      args:
+        chdir: /home/watch/docker

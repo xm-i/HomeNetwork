@@ -121,3 +121,17 @@ sh execute.sh
     nmcli con add type bridge-slave ifname enp2s0 master bridge-for-kvm0
     nmcli con del netplan-enp2s0
     ```
+# 監視サーバー (WatchServer)
+
+Prometheus + Grafana + Node Exporter によるインフラメトリクス監視。
+
+- **URL**: `http://monitor.home-server.localnet/` (または `http://grafana.home-server.localnet/`)
+- **初期アカウント**: `admin` / `admin`
+- **ダッシュボード**: 「Nodes Overview」が自動プロビジョニングされ、全サーバーのCPU・メモリ・ディスク・NW状態が一覧確認可能
+- **監視対象ノード**:
+  - watch-server (監視サーバー自身)
+  - home-server (Web / Nginx / Jenkins)
+  - db-server (PostgreSQL)
+  - batch-server
+  - raspi.localnet (10.0.0.2 / DNS & DHCP)
+  - aqua-raspi (アクアリウムIoT)
