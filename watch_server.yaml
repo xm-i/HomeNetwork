@@ -55,6 +55,15 @@
             mode: "0777",
           }
 
+    - name: Ensure env_file exists from default if missing
+      copy:
+        src: ./watch_server/docker/env_file_default
+        dest: /home/watch/docker/env_file
+        force: no
+        owner: watch
+        group: watch
+        mode: "0600"
+
     - name: Copy docker files
       copy:
         src: ./watch_server/docker/

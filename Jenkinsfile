@@ -13,6 +13,7 @@ node {
       configFileProvider([configFile(fileId: '007d1ea8-f543-45a2-b446-b52b3af1a3c5', targetLocation: 'home_server/nginx/sites-available/external')]) {}
       configFileProvider([configFile(fileId: '07960749-1250-4882-8653-b3127500f143', targetLocation: 'db_server/docker/mariadb/env_file')]) {}
       configFileProvider([configFile(fileId: 'f8b32646-b514-45e4-8871-df5aa7d403b6', targetLocation: 'db_server/copy/root/.my.cnf')]) {}
+      configFileProvider([configFile(fileId: '67930ad9-94b3-45a8-b9e4-f0bc43890e3c', targetLocation: 'watch_server/docker/env_file')]) {}
       // configFileProvider([configFile(fileId: '175e94a1-29f4-4133-a270-b42f8cb6a7b8', targetLocation: 'watch_server/docker/zabbix-server/env_file')]) {}
       // configFileProvider([configFile(fileId: '0deaffda-78a8-4e02-86ad-1d963b074f72', targetLocation: 'watch_server/docker/zabbix-web/env_file')]) {}
     }

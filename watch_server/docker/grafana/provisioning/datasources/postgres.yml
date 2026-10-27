@@ -1,0 +1,19 @@
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL
+    type: postgres
+    uid: postgresql-db-server
+    access: proxy
+    url: db-server.localnet:5432
+    database: postgres
+    user: ${GF_DATASOURCE_POSTGRES_USER}
+    secureJsonData:
+      password: ${GF_DATASOURCE_POSTGRES_PASSWORD}
+    jsonData:
+      sslmode: "disable"
+      postgresVersion: 1200
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+    editable: true
