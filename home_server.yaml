@@ -64,7 +64,7 @@
       apt:
         name:
           - apt-transport-https
-          - openjdk-17-jdk
+          - openjdk-21-jdk
           - jenkins
           - ansible
           - nginx
