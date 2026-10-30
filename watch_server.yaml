@@ -7,11 +7,16 @@
       timezone:
         name: Asia/Tokyo
 
+    - name: Remove legacy docker-compose (v1)
+      apt:
+        name: docker-compose
+        state: absent
+
     - name: Install apt packages
       apt:
         name:
           - docker.io
-          - docker-compose
+          - docker-compose-v2
           - prometheus-node-exporter
         state: present
         update_cache: yes
@@ -72,13 +77,13 @@
         - restart watch containers
 
     - name: Run docker-compose
-      command: docker-compose up -d --remove-orphans
+      command: docker compose up -d --remove-orphans
       args:
         chdir: /home/watch/docker
       changed_when: false
 
   handlers:
     - name: restart watch containers
-      command: docker-compose up -d --force-recreate --remove-orphans
+      command: docker compose up -d --force-recreate --remove-orphans
       args:
         chdir: /home/watch/docker
