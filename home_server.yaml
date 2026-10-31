@@ -77,6 +77,22 @@
         name: prometheus-node-exporter
         enabled: yes
         state: started
+    - name: Ensure nginx certs directory exists
+      file:
+        path: /etc/nginx/certs
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+    - name: Copy nginx certificates
+      copy:
+        src: ./home_server/nginx/certs/
+        dest: /etc/nginx/certs/
+        owner: root
+        group: root
+        mode: "0600"
+      notify:
+        - restart nginx
     - name: Copy nginx.conf
       copy:
         src: ./home_server/nginx/sites-available/

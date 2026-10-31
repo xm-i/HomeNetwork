@@ -1,12 +1,23 @@
 server{
     listen 80;
+    listen 443 ssl;
     server_name home-server.internal;
 
-    rewrite ^(.*)$ http://dashboard.home-server.internal$1 permanent;
+    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    rewrite ^(.*)$ $scheme://dashboard.home-server.internal$1 permanent;
 }
 server{
     listen 80;
+    listen 443 ssl;
     server_name dashboard.home-server.internal;
+
+    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
     root /var/www/html/dashboard;
     index index.html index.htm;
 
@@ -17,7 +28,13 @@ server{
 
 server{
     listen 80;
+    listen 443 ssl;
     server_name dashboard-api.home-server.internal;
+
+    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
     location / {
         proxy_pass http://localhost:5000;
         proxy_http_version 1.1;
@@ -31,14 +48,34 @@ server{
 }
 server{
     listen 80;
+    listen 443 ssl;
     server_name jenkins.home-server.internal;
+
+    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
     location / {
         proxy_pass http://localhost:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection keep-alive;
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 server{
     listen 80;
+    listen 443 ssl;
     server_name monitor.home-server.internal grafana.home-server.internal;
+
+    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
     location / {
         proxy_pass http://watch-server.internal:3000;
         proxy_set_header Host $host;
@@ -56,8 +93,14 @@ server{
 }
 server{
     listen 80;
+    listen 443 ssl;
     listen 8888;
     server_name recorder.home-server.internal;
+
+    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
     location / {
         proxy_pass http://recorder.internal:8888;
         proxy_http_version 1.1;
@@ -66,23 +109,37 @@ server{
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 
 server{
     listen 80;
+    listen 443 ssl;
     server_name rundeck.home-server.internal;
+
+    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
     location / {
         proxy_pass http://batch-server.internal:4440;
         proxy_set_header X-Forwarded-Host $host:$server_port;
         proxy_set_header X-Forwarded-Server $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 
 server{
     listen 80;
+    listen 443 ssl;
     server_name pinpon.home-server.internal;
+
+    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
     location / {
         proxy_pass http://pinpon-server.internal:5000;
         proxy_http_version 1.1;
