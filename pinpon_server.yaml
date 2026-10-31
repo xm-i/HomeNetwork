@@ -13,6 +13,7 @@
         name:
           - aspnetcore-runtime-10.0
           - prometheus-node-exporter
+          - ffmpeg
         state: present
         update_cache: yes
 
