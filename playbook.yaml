@@ -10,3 +10,5 @@
   import_playbook: ./watch_server.yaml
 - name: batch_server
   import_playbook: ./batch_server.yaml
+- name: pinpon_server
+  import_playbook: ./pinpon_server.yaml

@@ -39,3 +39,10 @@ batch-server.localnet
 [batch:vars]
 ansible_user=batch
 ansible_ssh_private_key_file=./batch_server/ssh_keys/batch_server.key
+
+[pinpon]
+pinpon-server.localnet
+
+[pinpon:vars]
+ansible_user=pinpon
+ansible_ssh_private_key_file=./pinpon_server/ssh_keys/pinpon_server.key

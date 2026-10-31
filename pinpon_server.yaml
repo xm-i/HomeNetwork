@@ -1,0 +1,50 @@
+- hosts: pinpon
+  become: yes
+  remote_user: pinpon
+  gather_facts: no
+
+  tasks:
+    - name: Set timezone
+      timezone:
+        name: Asia/Tokyo
+
+    - name: Install apt packages
+      apt:
+        name:
+          - aspnetcore-runtime-10.0
+          - prometheus-node-exporter
+        state: present
+        update_cache: yes
+
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
+
+    - name: Create app directory
+      file:
+        path: /opt/pinpon
+        state: directory
+        owner: pinpon
+        group: pinpon
+        mode: "0755"
+
+    - name: Copy systemd service file
+      copy:
+        src: ./pinpon_server/services/servicefiles/pinpon.service
+        dest: /etc/systemd/system/pinpon.service
+      notify:
+        - reload systemd and restart pinpon service
+
+    - name: Enable pinpon service
+      service:
+        name: pinpon
+        enabled: yes
+
+  handlers:
+    - name: reload systemd and restart pinpon service
+      systemd:
+        name: pinpon
+        state: restarted
+        daemon_reload: yes

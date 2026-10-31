@@ -10,6 +10,7 @@ node {
       configFileProvider([configFile(fileId: '937aec52-0ffe-4840-b3a8-f725ce16b8ec', targetLocation: 'group_vars/db.yaml')]) {}
       configFileProvider([configFile(fileId: '00822a4e-2506-42a6-ab2f-320c805c8cdc', targetLocation: 'group_vars/watch.yaml')]) {}
       configFileProvider([configFile(fileId: '1ac1e035-f68a-4f76-bda0-17a5e8cb9892', targetLocation: 'group_vars/batch.yaml')]) {}
+      configFileProvider([configFile(fileId: '7261e61a-8049-4b23-88cd-59cc328c41c5', targetLocation: 'group_vars/pinpon.yaml')]) {}
       configFileProvider([configFile(fileId: '007d1ea8-f543-45a2-b446-b52b3af1a3c5', targetLocation: 'home_server/nginx/sites-available/external')]) {}
       configFileProvider([configFile(fileId: '07960749-1250-4882-8653-b3127500f143', targetLocation: 'db_server/docker/mariadb/env_file')]) {}
       configFileProvider([configFile(fileId: 'f8b32646-b514-45e4-8871-df5aa7d403b6', targetLocation: 'db_server/copy/root/.my.cnf')]) {}
@@ -35,6 +36,10 @@ node {
 
     stage('Ansible batch_server'){
       ansiblePlaybook credentialsId: '1f4f3d15-c26b-4d2e-86a7-def517f966b3', inventory: 'inventory_jenkins', limit: 'batch', playbook: 'playbook.yaml'
+    }
+
+    stage('Ansible pinpon_server'){
+      ansiblePlaybook credentialsId: '21e3a064-8b91-4e3e-ac42-c82ffd54598f', inventory: 'inventory_jenkins', limit: 'pinpon', playbook: 'playbook.yaml'
     }
 
     stage('Ansible raspi_dhcp'){
