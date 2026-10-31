@@ -10,12 +10,12 @@ scrape_configs:
   - job_name: 'node'
     static_configs:
       - targets:
-          - 'watch-server.localnet:9100'
-          - 'home-server.localnet:9100'
-          - 'db-server.localnet:9100'
-          - 'batch-server.localnet:9100'
-          - 'raspi.localnet:9100'
-          - 'aqua-raspi.localnet:9100'
-          # - 'recorder.localnet:9100'
+          - 'watch-server.internal:9100'
+          - 'home-server.internal:9100'
+          - 'db-server.internal:9100'
+          - 'batch-server.internal:9100'
+          - 'raspi.internal:9100'
+          - 'aqua-raspi.internal:9100'
+          # - 'recorder.internal:9100'
         labels:
           environment: 'production'

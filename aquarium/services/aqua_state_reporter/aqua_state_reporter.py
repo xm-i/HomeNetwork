@@ -42,7 +42,7 @@ def report(dt, water_temperature, humidity, temperature):
             })
     try:
         request = urllib.request.Request(
-            "http://dashboard-api.home-server.localnet/api/aquarium-api/post-register-water-state",
+            "http://dashboard-api.home-server.internal/api/aquarium-api/post-register-water-state",
             json_string.encode("utf-8"),
             {"Content-Type": "application/json"},
             method="POST")

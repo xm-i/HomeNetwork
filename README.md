@@ -104,9 +104,9 @@ sh execute.sh
     ```
     su jenkins
     ssh 10.0.0.2
-    ssh home-server.localnet
-    ssh aquaraspi.localnet
-    ssh raspi.localnet
+    ssh home-server.internal
+    ssh aquaraspi.internal
+    ssh raspi.internal
     ssh ...全ホストやる
     ```
 
@@ -125,7 +125,7 @@ sh execute.sh
 
 Prometheus + Grafana + Node Exporter によるインフラメトリクス監視。
 
-- **URL**: `http://monitor.home-server.localnet/` (または `http://grafana.home-server.localnet/`)
+- **URL**: `http://monitor.home-server.internal/` (または `http://grafana.home-server.internal/`)
 - **初期アカウント**: `admin` / `admin`
 - **ダッシュボード**: 「Nodes Overview」が自動プロビジョニングされ、全サーバーのCPU・メモリ・ディスク・NW状態が一覧確認可能
 - **監視対象ノード**:
@@ -133,5 +133,5 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
   - home-server (Web / Nginx / Jenkins)
   - db-server (PostgreSQL)
   - batch-server
-  - raspi.localnet (10.0.0.2 / DNS & DHCP)
+  - raspi.internal (10.0.0.2 / DNS & DHCP)
   - aqua-raspi (アクアリウムIoT)

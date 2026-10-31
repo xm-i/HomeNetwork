@@ -9,7 +9,6 @@
         "gpio",
         "grafana",
         "initdb",
-        "localnet",
         "mariadb",
         "mkdir",
         "modprobe",

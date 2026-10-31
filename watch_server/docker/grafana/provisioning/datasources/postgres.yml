@@ -5,7 +5,7 @@ datasources:
     type: postgres
     uid: postgresql-db-server
     access: proxy
-    url: db-server.localnet:5432
+    url: db-server.internal:5432
     database: postgres
     user: ${GF_DATASOURCE_POSTGRES_USER}
     secureJsonData:

@@ -100,7 +100,7 @@
             name: oui更新,
             minute: "44",
             hour: "4",
-            job: "curl --location --request POST 'http://dashboard-api.home-server.localnet/api/network-api/post-update-vendor-list-request' --header 'Content-Type: application/json'",
+            job: "curl --location --request POST 'http://dashboard-api.home-server.internal/api/network-api/post-update-vendor-list-request' --header 'Content-Type: application/json'",
           }
         - {
             name: Dynamic DNS更新Cron,

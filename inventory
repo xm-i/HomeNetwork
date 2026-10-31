@@ -6,42 +6,42 @@ ansible_user=pi
 ansible_ssh_private_key_file=./raspi_dhcp/ssh_keys/raspberrypi.key
 
 [home]
-home-server.localnet
+home-server.internal
 
 [home:vars]
 ansible_user=home
 ansible_ssh_private_key_file=./home_server/ssh_keys/home.key
 
 [aquarium]
-aqua-raspi.localnet
+aqua-raspi.internal
 
 [aquarium:vars]
 ansible_user=pi
 ansible_ssh_private_key_file=./aquarium/ssh_keys/aquapi.key
 
 [db]
-db-server.localnet
+db-server.internal
 
 [db:vars]
 ansible_user=db
 ansible_ssh_private_key_file=./db_server/ssh_keys/db_server.key
 
 [watch]
-watch-server.localnet
+watch-server.internal
 
 [watch:vars]
 ansible_user=watch
 ansible_ssh_private_key_file=./watch_server/ssh_keys/watch_server.key
 
 [batch]
-batch-server.localnet
+batch-server.internal
 
 [batch:vars]
 ansible_user=batch
 ansible_ssh_private_key_file=./batch_server/ssh_keys/batch_server.key
 
 [pinpon]
-pinpon-server.localnet
+pinpon-server.internal
 
 [pinpon:vars]
 ansible_user=pinpon

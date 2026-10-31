@@ -2,19 +2,19 @@
 10.0.0.2
 
 [home]
-home-server.localnet
+home-server.internal
 
 [aquarium]
-aqua-raspi.localnet
+aqua-raspi.internal
 
 [db]
-db-server.localnet
+db-server.internal
 
 [watch]
-watch-server.localnet
+watch-server.internal
 
 [batch]
-batch-server.localnet
+batch-server.internal
 
 [pinpon]
-pinpon-server.localnet
+pinpon-server.internal
