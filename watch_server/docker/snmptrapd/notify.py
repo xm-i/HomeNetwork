@@ -5,6 +5,44 @@ import json
 import urllib.request
 from datetime import datetime
 
+# デフォルトでWebhook通知をスキップするパターン（大文字小文字無視・部分一致）
+DEFAULT_IGNORE_PATTERNS = [
+    # NAS (ASUSTOR等) の定期的なストレージ使用量計算完了通知
+    "storage usage calculating is complete",
+]
+
+def get_ignore_patterns():
+    patterns = list(DEFAULT_IGNORE_PATTERNS)
+    env_patterns = os.environ.get("SNMP_TRAP_IGNORE_PATTERNS", "")
+    if env_patterns:
+        for p in env_patterns.split(","):
+            p = p.strip()
+            if p:
+                patterns.append(p)
+    return patterns
+
+def check_ignore(trap):
+    """
+    受信したトラップが無視対象パターンに合致するか判定する。
+    合致した場合は (True, マッチしたパターン文字列) を返す。
+    """
+    patterns = get_ignore_patterns()
+    if not patterns:
+        return False, None
+
+    candidates = []
+    candidates.extend(trap.get("raw_lines", []))
+    for k, v in trap.get("varbinds", {}).items():
+        candidates.append(f"{k} = {v}")
+
+    for text in candidates:
+        text_lower = text.lower()
+        for pattern in patterns:
+            if pattern.lower() in text_lower:
+                return True, pattern
+
+    return False, None
+
 def parse_trap():
     lines = [line.strip() for line in sys.stdin if line.strip()]
     if not lines:
@@ -81,6 +119,12 @@ def main():
     for k, v in varbinds.items():
         print(f"  {k} = {v}")
 
+    # フィルタリング判定
+    ignored, matched_pattern = check_ignore(trap)
+    if ignored:
+        print(f"[snmptrapd-notify] Ignored trap by filter pattern: '{matched_pattern}' (skipping webhook)")
+        return
+
     # Webhook 送信
     webhook_url = os.environ.get("SNMP_TRAP_WEBHOOK_URL")
     if not webhook_url:
@@ -104,7 +148,7 @@ def main():
         f"**Trap OID**: `{trap_oid}`\n"
     )
     if detail_str:
-        message_text += f"```text\n{detail_str}\n```"
+        message_text += f"\n```text\n{detail_str}\n```"
 
     payload = json.dumps({"text": message_text}).encode("utf-8")
     req = urllib.request.Request(

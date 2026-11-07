@@ -2,5 +2,7 @@ GF_DATASOURCE_POSTGRES_USER=
 GF_DATASOURCE_POSTGRES_PASSWORD=
 # SNMP Trap Webhook URL (Slack or Discord format)
 SNMP_TRAP_WEBHOOK_URL=
+# SNMP Trap Ignore Patterns (カンマ区切りで追加の除外文字列を指定可能)
+# SNMP_TRAP_IGNORE_PATTERNS=
 # Recorder Alert Webhook URL (leave empty to fallback to SNMP_TRAP_WEBHOOK_URL)
 ALERT_WEBHOOK_URL=
