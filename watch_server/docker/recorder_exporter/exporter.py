@@ -30,6 +30,7 @@ SCRAPE_INTERVAL = int(os.environ.get("SCRAPE_INTERVAL", "15"))
 WEBHOOK_URL = os.environ.get("ALERT_WEBHOOK_URL") or os.environ.get("SNMP_TRAP_WEBHOOK_URL", "")
 STORAGE_LOW_THRESHOLD_GB = float(os.environ.get("STORAGE_LOW_THRESHOLD_GB", "100"))
 STORAGE_USED_PERCENT_THRESHOLD = float(os.environ.get("STORAGE_USED_PERCENT_THRESHOLD", "95"))
+STORAGE_REMIND_INTERVAL_SECONDS = int(os.environ.get("STORAGE_REMIND_INTERVAL_SECONDS", "86400"))
 
 class State:
     def __init__(self):
@@ -131,23 +132,62 @@ def check_alerts(epg_data, mirakurun_data):
     state.faulty_tuners = current_faulty
 
     # 4. Storage Low warning
-    current_low = set()
+    current_low = {}
     for s in epg_data.get("storages", []):
         name = s.get("name", "unknown")
         avail_gb = s.get("available", 0) / (1024 ** 3)
-        total_gb = s.get("total", 0) / (1024 ** 3)
         pct = (s.get("used", 0) / s.get("total", 1)) * 100 if s.get("total", 0) > 0 else 0
         if avail_gb < STORAGE_LOW_THRESHOLD_GB or pct >= STORAGE_USED_PERCENT_THRESHOLD:
-            current_low.add(f"{name} (残 {avail_gb:.1f}GB / {pct:.1f}%)")
+            current_low[name] = (avail_gb, pct)
 
-    new_low = current_low - state.low_storages
+    current_low_names = set(current_low.keys())
+    new_low = current_low_names - state.low_storages
+    recovered_low = state.low_storages - current_low_names
+
     if new_low:
+        messages = [
+            f"- `{name}` (残 {current_low[name][0]:.1f}GB / 使用率 {current_low[name][1]:.1f}%)"
+            for name in new_low
+        ]
         send_webhook(
             "録画ストレージ容量警告",
-            f"ストレージ容量が閾値を下回りました:\n" + "\n".join([f"- `{x}`" for x in new_low]),
+            f"ストレージ容量が閾値を下回りました:\n" + "\n".join(messages),
             ":warning:"
         )
-    state.low_storages = current_low
+        for name in new_low:
+            state.alert_cooldowns[f"storage_{name}"] = now
+
+    # 閾値を下回った状態が長期間継続している場合のリマインド通知
+    if STORAGE_REMIND_INTERVAL_SECONDS > 0:
+        remind_low = []
+        for name in current_low_names - new_low:
+            last_alert = state.alert_cooldowns.get(f"storage_{name}", 0)
+            if now - last_alert >= STORAGE_REMIND_INTERVAL_SECONDS:
+                state.alert_cooldowns[f"storage_{name}"] = now
+                remind_low.append(name)
+
+        if remind_low:
+            messages = [
+                f"- `{name}` (残 {current_low[name][0]:.1f}GB / 使用率 {current_low[name][1]:.1f}%)"
+                for name in remind_low
+            ]
+            send_webhook(
+                "録画ストレージ容量警告 (継続リマインド)",
+                f"ストレージ容量が閾値を下回った状態が続いています:\n" + "\n".join(messages),
+                ":warning:"
+            )
+
+    if recovered_low:
+        messages = [f"- `{name}`" for name in recovered_low]
+        send_webhook(
+            "録画ストレージ容量復旧",
+            f"以下のストレージ容量が正常範囲に回復しました:\n" + "\n".join(messages),
+            ":white_check_mark:"
+        )
+        for name in recovered_low:
+            state.alert_cooldowns.pop(f"storage_{name}", None)
+
+    state.low_storages = current_low_names
 
     # 5. Drop Packets Warning
     current_drops = mirakurun_data.get("total_drops", 0)
