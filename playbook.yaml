@@ -1,7 +1,7 @@
 - name: home_server
   import_playbook: ./home_server.yaml
-- name: raspi_dhcp
-  import_playbook: ./raspi_dhcp.yaml
+- name: dns_server
+  import_playbook: ./dns_server.yaml
 #- name: aquarium
 #  import_playbook: ./aquarium.yaml
 - name: db_server

@@ -1,0 +1,15 @@
+[Unit]
+Description=DhcpAssignNotifier
+After=network.target
+
+[Service]
+User=dns
+Group=dns
+WorkingDirectory=/home/dns/services/dhcp_assign_notifier
+ExecStart=/usr/bin/python3 /home/dns/services/dhcp_assign_notifier/dhcp_assign_notifier.py
+Restart=always
+RestartSec=5
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

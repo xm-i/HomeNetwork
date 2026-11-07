@@ -1,5 +1,8 @@
-[dhcp]
+[dns]
 10.0.0.2
+
+[dns:vars]
+ansible_user=dns
 
 [home]
 home-server.internal

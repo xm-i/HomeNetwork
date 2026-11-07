@@ -4,25 +4,14 @@ Ansibleを使いネットワークまわりの設定を行う。
 
 # 前提手順
 
-## DNS兼DHCP Server
+## DNS兼DHCP Server (dns-server)
 
-1. Raspbianをインストールする。
-2. bootディレクトリにsshという名前の空ファイルを作成し、SSH接続できるようにする。
-3. ネットワーク設定を行う。
-    - IPアドレスは 10.0.0.2で固定しておく  
-        /etc/dhcpcd.confに以下を追記してreboot。
-
-        ```
-        interface eth0
-        static ip_address=10.0.0.2/20
-        static routers=10.0.0.1
-        static domain_name_servers=8.8.8.8,2001:4860:4860::8888
-        static ip6_address=fe80::ae44:f2ff:fe70:3874/64
-        ```
-
-    - 公開鍵認証でpiユーザーにログインできるようにする。
-        - RaspberryPiの/.ssh/authorized_keysに公開鍵を保存する。
-        - Ansibleを実行する側の./raspi_dhcp/ssh_keys/raspberrypi.keyに秘密鍵を保存する。(OpenSSH形式)
+1. KVMゲストを作成し、Ubuntuをインストールする（ユーザー名: `dns`、ホスト名: `dns-server`）。
+2. ネットワーク設定を行う。
+    - IPアドレスは `10.0.0.2/20`（Gateway: `10.0.0.1`、DNS: `1.1.1.1, 8.8.8.8`）で固定しておく。
+    - 公開鍵認証で `dns` ユーザーにログインできるようにする。
+        - `dns-server` の `~/.ssh/authorized_keys` に公開鍵を保存する。
+        - Ansibleを実行する側の `./dns_server/ssh_keys/dns_server.key` に秘密鍵を保存する。(OpenSSH形式)
 
 ## DHCP通知用設定
 
@@ -32,13 +21,13 @@ SlackにDHCP割当通知を行うための設定を行う。
 2. Ansibleを実行する側の
 
     ```
-    ./raspi_dhcp/services/dhcp_assign_notifier/common/constants_default.py
+    ./dns_server/services/dhcp_assign_notifier/constants_default.py
     ```
 
     を
 
     ```
-    ./raspi_dhcp/services/dhcp_assign_notifier/common/constants.py
+    ./dns_server/services/dhcp_assign_notifier/constants.py
     ```
 
     にコピーして、WEBHOOK_URLに投稿先SlackのIncoming Webhook URLを代入する。
@@ -106,7 +95,7 @@ sh execute.sh
     ssh 10.0.0.2
     ssh home-server.internal
     ssh aquaraspi.internal
-    ssh raspi.internal
+    ssh dns-server.internal
     ssh ...全ホストやる
     ```
 
@@ -133,5 +122,5 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
   - home-server (Web / Nginx / Jenkins)
   - db-server (PostgreSQL)
   - batch-server
-  - raspi.internal (10.0.0.2 / DNS & DHCP)
+  - dns-server.internal (10.0.0.2 / DNS & DHCP)
   - aqua-raspi (アクアリウムIoT)

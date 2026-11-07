@@ -1,0 +1,180 @@
+- hosts: dns
+  become: yes
+  remote_user: dns
+  gather_facts: no
+  tasks:
+    - name: Set timezone
+      timezone:
+        name: Asia/Tokyo
+
+    - name: Set hostname
+      hostname:
+        name: dns-server
+
+    - name: Disable DNSStubListener in systemd-resolved (to free port 53 for dnsmasq)
+      lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: '^#?DNSStubListener='
+        line: 'DNSStubListener=no'
+      notify:
+        - restart systemd-resolved
+
+    - name: Link /etc/resolv.conf to systemd upstream resolv.conf
+      file:
+        src: /run/systemd/resolve/resolv.conf
+        dest: /etc/resolv.conf
+        state: link
+        force: yes
+
+    - name: Flush handlers to apply systemd-resolved changes before dnsmasq install
+      meta: flush_handlers
+
+    - name: "Install apt packages"
+      apt:
+        name:
+          - dnsmasq
+          - prometheus-node-exporter
+          - python3
+          - wget
+        state: present
+        update_cache: yes
+
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
+
+    - name: Copy dnsmasq.conf
+      copy:
+        src: ./dns_server/dnsmasq/dnsmasq.conf
+        dest: /etc/dnsmasq.conf
+      notify:
+        - restart dnsmasq
+
+    - name: Copy dnsmasq-hosts
+      copy:
+        src: ./dns_server/dnsmasq/dnsmasq-hosts
+        dest: /etc/dnsmasq-hosts
+      notify:
+        - restart dnsmasq
+
+    - name: Ensure /var/lib/misc directory exists (for dnsmasq.leases)
+      file:
+        path: /var/lib/misc
+        state: directory
+        mode: "0755"
+
+    - name: Ensure /var/lib/misc/dnsmasq.leases file exists
+      copy:
+        content: ""
+        dest: /var/lib/misc/dnsmasq.leases
+        force: no
+        mode: "0644"
+
+    - name: mkdir /var/lib/myscripts/
+      file:
+        path: /var/lib/myscripts/
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Register oui.csv update cron
+      cron:
+        name: oui更新
+        minute: "44"
+        hour: "4"
+        job: 'wget -q -U "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" https://standards-oui.ieee.org/oui/oui.csv -O /var/lib/myscripts/oui.csv'
+        state: present
+
+    - name: Initial download of oui.csv
+      get_url:
+        url: https://standards-oui.ieee.org/oui/oui.csv
+        dest: /var/lib/myscripts/oui.csv
+        http_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        mode: "0644"
+      ignore_errors: yes
+
+    - name: mkdir /home/dns/services directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: dns
+        group: dns
+        mode: "0755"
+      loop:
+        - /home/dns/services
+        - /home/dns/services/dhcp_assign_notifier
+        - /home/dns/services/dhcp_web
+
+    - name: Copy dhcp_assign_notifier files
+      copy:
+        src: ./dns_server/services/dhcp_assign_notifier/
+        dest: /home/dns/services/dhcp_assign_notifier/
+        owner: dns
+        group: dns
+        mode: "0755"
+      notify:
+        - reload systemd
+        - restart dhcp_assign_notifier
+
+    - name: Copy dhcp_web (Python-based Web UI)
+      copy:
+        src: ./dns_server/services/dhcp_web/dhcp_web.py
+        dest: /home/dns/services/dhcp_web/dhcp_web.py
+        owner: dns
+        group: dns
+        mode: "0755"
+      notify:
+        - reload systemd
+        - restart dhcp_web
+
+    - name: Copy systemd service files
+      copy:
+        src: "./dns_server/services/servicefiles/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - dhcp_assign_notifier.service
+        - dhcp_web.service
+      notify:
+        - reload systemd
+        - restart dhcp_assign_notifier
+        - restart dhcp_web
+
+    - name: Ensure Python services are enabled and started
+      service:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop:
+        - dhcp_assign_notifier
+        - dhcp_web
+
+  handlers:
+    - name: restart systemd-resolved
+      service:
+        name: systemd-resolved
+        state: restarted
+
+    - name: restart dnsmasq
+      service:
+        name: dnsmasq
+        state: restarted
+
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart dhcp_assign_notifier
+      service:
+        name: dhcp_assign_notifier
+        state: restarted
+
+    - name: restart dhcp_web
+      service:
+        name: dhcp_web
+        state: restarted

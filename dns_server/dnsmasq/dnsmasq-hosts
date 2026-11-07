@@ -1,5 +1,5 @@
 10.0.0.1 rtx1210.internal
-10.0.0.2 raspi.internal
+10.0.0.2 dns-server.internal
 10.0.0.3 xs708t.internal
 10.0.0.4 gs108pe.internal
 10.0.0.5 nas.internal
