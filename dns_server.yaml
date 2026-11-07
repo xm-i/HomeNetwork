@@ -88,14 +88,6 @@
         job: 'wget -q -U "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" https://standards-oui.ieee.org/oui/oui.csv -O /var/lib/myscripts/oui.csv'
         state: present
 
-    - name: Initial download of oui.csv
-      get_url:
-        url: https://standards-oui.ieee.org/oui/oui.csv
-        dest: /var/lib/myscripts/oui.csv
-        http_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        mode: "0644"
-      ignore_errors: yes
-
     - name: mkdir /home/dns/services directories
       file:
         path: "{{ item }}"
