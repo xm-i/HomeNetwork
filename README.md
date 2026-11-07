@@ -127,6 +127,23 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
   - rtx1210 (10.0.0.1 / ルーター / SNMPポーリング & トラップ監視)
   - xs708t (10.0.0.3 / 10G L2スイッチ / ポートトラフィック監視)
   - nas (10.0.0.5 / ASUSTOR NAS / CPU・メモリ・温度・ディスク健康状態監視)
+  - recorder (10.0.0.8 / EPGStation & Mirakurun / 録画健全性・予約競合・チューナードロップ監視)
+
+## 録画サーバー監視 (Recorder / EPGStation & Mirakurun)
+
+WatchServer 内の `recorder-exporter` コンテナが `recorder.internal` (10.0.0.8) の EPGStation および Mirakurun からメトリクスを自動収集します。
+
+- **Grafanaダッシュボード**: 「Recorder / 録画監視 (EPGStation & Mirakurun)」
+- **主な監視項目**:
+  - **EPGStation / Mirakurun 死活監視**: プロセスが正常に応答しているか (UP / DOWN)
+  - **録画中番組数**: リアルタイムの録画実行数
+  - **予約競合 (Conflict)**: チューナー枯渇や重複等による録画スキップ・衝突の有無 (**赤色アラート**)
+  - **ストリームドロップ (Drops)**: リアルタイム受信ストリームのパケット欠落数 (アンテナ・受信状況の健全性)
+  - **チューナー状態 (PX-MLT5)**: 5チューナーそれぞれの利用可否 (`available`)、使用中 (`using`)、故障検知 (`fault`)
+  - **ストレージ容量・使用率**: 録画保存先 (`recorded`) および一時録画領域 (`recording`) の残容量と使用率 (残100GB未満/95%以上で警告)
+  - **Mirakurunエラー・ストリーム**: バッファオーバーフロー、チューナーデバイス再起動回数、アクティブストリーム数
+- **Webhook通知**:
+  - `watch_server/docker/env_file` の `ALERT_WEBHOOK_URL` (または `SNMP_TRAP_WEBHOOK_URL`) を設定すると、予約競合発生時、チューナー障害時、ストレージ容量低下時、サービスダウン時に Discord / Slack へ即時アラート通知が送信されます。
 
 ## ネットワーク機器・NASのSNMP設定
 

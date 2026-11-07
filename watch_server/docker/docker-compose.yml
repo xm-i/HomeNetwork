@@ -17,6 +17,22 @@ services:
       - "9090:9090"
     depends_on:
       - snmp-exporter
+      - recorder-exporter
+
+  recorder-exporter:
+    build:
+      context: ./recorder_exporter
+    container_name: recorder-exporter
+    restart: always
+    environment:
+      - EPGSTATION_URL=http://recorder.internal:8888
+      - MIRAKURUN_URL=http://recorder.internal:40772
+      - PORT=9876
+      - SCRAPE_INTERVAL=15
+    env_file:
+      - env_file
+    ports:
+      - "9876:9876"
 
   snmp-exporter:
     image: prom/snmp-exporter:v0.26.0
