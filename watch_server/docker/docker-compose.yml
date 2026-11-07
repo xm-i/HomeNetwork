@@ -29,6 +29,7 @@ services:
       - MIRAKURUN_URL=http://recorder.internal:40772
       - PORT=9876
       - SCRAPE_INTERVAL=15
+      - TZ=Asia/Tokyo
     env_file:
       - env_file
     ports:

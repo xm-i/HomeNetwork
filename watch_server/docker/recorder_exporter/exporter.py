@@ -14,7 +14,9 @@ import threading
 import urllib.request
 import urllib.error
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+JST = timezone(timedelta(hours=9))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -61,7 +63,7 @@ def fetch_json(url, timeout=5):
 def send_webhook(title, message, color_emoji=":warning:"):
     if not WEBHOOK_URL:
         return
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now_str = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S")
     payload_text = f"{color_emoji} **{title}**\n**時刻**: {now_str}\n{message}"
     data = json.dumps({"text": payload_text}).encode("utf-8")
     req = urllib.request.Request(
@@ -361,7 +363,7 @@ def collect_metrics():
                 state.metrics_text = output_text
                 state.last_update = time.time()
                 state.status_summary = {
-                    "updated_at": datetime.now().isoformat(),
+                    "updated_at": datetime.now(JST).isoformat(),
                     "epgstation_up": epg_data["up"],
                     "mirakurun_up": mirakurun_data["up"],
                     "recording_count": epg_data["recording"].get("total", 0) if epg_data["up"] else 0,
