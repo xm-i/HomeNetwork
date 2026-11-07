@@ -33,6 +33,7 @@ WEBHOOK_URL = os.environ.get("ALERT_WEBHOOK_URL") or os.environ.get("SNMP_TRAP_W
 STORAGE_LOW_THRESHOLD_GB = float(os.environ.get("STORAGE_LOW_THRESHOLD_GB", "100"))
 STORAGE_USED_PERCENT_THRESHOLD = float(os.environ.get("STORAGE_USED_PERCENT_THRESHOLD", "95"))
 STORAGE_REMIND_INTERVAL_SECONDS = int(os.environ.get("STORAGE_REMIND_INTERVAL_SECONDS", "86400"))
+TUNER_FAULT_THRESHOLD_SECONDS = int(os.environ.get("TUNER_FAULT_THRESHOLD_SECONDS", "600"))
 
 class State:
     def __init__(self):
@@ -46,6 +47,7 @@ class State:
         self.mirakurun_up = True
         self.active_conflicts = 0
         self.faulty_tuners = set()
+        self.tuner_fault_since = {}
         self.low_storages = set()
         self.last_drops_total = 0
         self.alert_cooldowns = {}
@@ -111,27 +113,52 @@ def check_alerts(epg_data, mirakurun_data):
         send_webhook("録画予約競合 解消", "予約競合が解消されました。全予約が正常に割り当てられています。", ":white_check_mark:")
 
     # 3. Tuners Fault / Unavailability
-    current_faulty = set()
-    for t in mirakurun_data.get("tuners", []):
-        t_name = t.get("name", f"Tuner{t.get('index')}")
-        if t.get("isFault", False) or not t.get("isAvailable", True):
-            current_faulty.add(t_name)
+    # Mirakurun が正常に応答している場合のみ判定（一時的なスクレイプ失敗で状態がクリアされるのを防止）
+    if mirakurun_data.get("up", False) and "tuners" in mirakurun_data:
+        raw_faulty = set()
+        for t in mirakurun_data.get("tuners", []):
+            t_name = t.get("name", f"Tuner{t.get('index')}")
+            if t.get("isFault", False) or not t.get("isAvailable", True):
+                raw_faulty.add(t_name)
 
-    new_faulty = current_faulty - state.faulty_tuners
-    recovered_faulty = state.faulty_tuners - current_faulty
-    if new_faulty:
-        send_webhook(
-            "チューナー障害検知",
-            f"以下のチューナーが利用不可または故障状態です: `{', '.join(new_faulty)}`",
-            ":rotating_light:"
-        )
-    if recovered_faulty:
-        send_webhook(
-            "チューナー復旧検知",
-            f"以下のチューナーが正常復旧しました: `{', '.join(recovered_faulty)}`",
-            ":white_check_mark:"
-        )
-    state.faulty_tuners = current_faulty
+        # 異常が検知されたチューナーのタイマー開始 / 継続
+        for t_name in raw_faulty:
+            if t_name not in state.tuner_fault_since:
+                state.tuner_fault_since[t_name] = now
+
+        # 正常に戻ったチューナーのタイマー解除
+        for t_name in list(state.tuner_fault_since.keys()):
+            if t_name not in raw_faulty:
+                del state.tuner_fault_since[t_name]
+
+        # 閾値（デフォルト10分: 600秒）以上継続して異常なチューナーを抽出
+        confirmed_faulty = {
+            t_name for t_name, start_time in state.tuner_fault_since.items()
+            if (now - start_time) >= TUNER_FAULT_THRESHOLD_SECONDS
+        }
+
+        # 新規に障害確定したチューナー（未通知のもの）
+        new_faulty = confirmed_faulty - state.faulty_tuners
+        # 復旧したチューナー（過去に通知済みだが、現在は raw_faulty にいないもの）
+        recovered_faulty = state.faulty_tuners - raw_faulty
+
+        if new_faulty:
+            minutes = TUNER_FAULT_THRESHOLD_SECONDS // 60
+            time_desc = f"{minutes}分" if minutes > 0 else f"{TUNER_FAULT_THRESHOLD_SECONDS}秒"
+            send_webhook(
+                "チューナー障害検知",
+                f"以下のチューナーが **{time_desc}以上継続** して利用不可または故障状態です: `{', '.join(sorted(new_faulty))}`",
+                ":rotating_light:"
+            )
+            state.faulty_tuners.update(new_faulty)
+
+        if recovered_faulty:
+            send_webhook(
+                "チューナー復旧検知",
+                f"以下のチューナーが正常復旧しました: `{', '.join(sorted(recovered_faulty))}`",
+                ":white_check_mark:"
+            )
+            state.faulty_tuners.difference_update(recovered_faulty)
 
     # 4. Storage Low warning
     current_low = {}
