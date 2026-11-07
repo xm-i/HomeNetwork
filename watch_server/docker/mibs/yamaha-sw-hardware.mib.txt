@@ -1,0 +1,997 @@
+-- $Id: yamaha-sw-hardware.mib.txt,v 1.3 2019/02/01 04:06:35 mizushima Exp $
+
+YAMAHA-SW-HARDWARE DEFINITIONS ::= BEGIN
+
+IMPORTS
+	Gauge
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	DisplayString
+		FROM RFC1213-MIB
+	TRAP-TYPE
+		FROM RFC-1215
+	yamahaSWHardware
+		FROM YAMAHA-SW;
+
+-- hardware information
+
+yshCpuType OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The CPU type."
+	::= { yamahaSWHardware 1 }
+
+yshMemorySize OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The size of main memory in bytes."
+	::= { yamahaSWHardware 2 }
+
+yshFlashROMSize OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The size of the internal Flash ROM in bytes."
+	::= { yamahaSWHardware 3 }
+
+yshMemoryUtil OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The utilization in percentage of main memory."
+	::= { yamahaSWHardware 4 }
+
+yshCpuUtil5sec OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 5 seconds."
+	::= { yamahaSWHardware 5 }
+
+yshCpuUtil1min OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 1 minutes."
+	::= { yamahaSWHardware 6 }
+
+yshCpuUtil5min OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 5 minutes."
+	::= { yamahaSWHardware 7 }
+
+yshMemoryUtilTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable yrhMemoryUtil is over
+		this variable, the system will produce
+		yrhMemoryUtilTrap.  If this value is set as 0, the
+		system will never send yrhMemoryUtilTrap."
+	::= { yamahaSWHardware 8 }
+
+yshCpuUtil5secTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil5sec is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yamahaSWHardware 9 }
+
+yshCpuUtil1minTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil1min is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yamahaSWHardware 10 }
+
+yshCpuUtil5minTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil5min is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yamahaSWHardware 11 }
+
+yshModuleTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YshModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of the main and interface modules"
+	::= { yamahaSWHardware 12 }
+
+yshPowerModuleTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YshPowerModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of the power modules"
+	::= { yamahaSWHardware 13 }
+
+yshFanModuleTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YshFanModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of the fan modules"
+	::= { yamahaSWHardware 14 }
+
+yshInboxTemperature OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A temperature in the box."
+	::= { yamahaSWHardware 15 }
+
+yshSystemAlarm OBJECT-TYPE
+	SYNTAX	INTEGER { on(1), off(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicate the condition when the ALARM LED is on or off."
+	::= { yamahaSWHardware 16 }
+
+yshEnableSystemAlarmTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicate the system will send yrhSystemAlarmTrap when
+		the variable yrhSystemTrap is turned to on."
+	::= { yamahaSWHardware 17 }
+
+yshMultiCpuTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YshMultiCpuEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of the multi CPU"
+	::= { yamahaSWHardware 18 }
+
+yshStackTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YshStackEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Hardware information for each stack member.
+		it only when the stack is configured can get."
+	::= { yamahaSWHardware 19 }
+
+yshEnableTemperatureTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If this value is set to 1, trap notification such as yshTemperatureStatusNormalTrap
+		is enabled. If this value is set to 2, trap notification is disabled."
+	::= { yamahaSWHardware 20 }
+
+yshTemperatureTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YshTemperatureEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Temperature value for each device."
+	::= { yamahaSWHardware 21 }
+
+yshTemperatureStatusTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YshTemperatureStatusEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Temperature status for each device."
+	::= { yamahaSWHardware 22 }
+
+yshEnableFanTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If this value is set to 1, trap notification such as yshFanStoppedTrap
+		is enabled. If this value is set to 2, trap notification is disabled."
+	::= { yamahaSWHardware 23 }
+
+yshFanTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YshFanEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Fan status"
+	::= { yamahaSWHardware 24 }
+
+yshFanSpeedStatusTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YshFanSpeedStatusEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Fan speed status"
+	::= { yamahaSWHardware 25 }
+
+yshEnableVITrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If this value is set to 1, trap notification such as yshVIVoltageErrorTrap
+		is enabled. If this value is set to 2, trap notification is disabled."
+	::= { yamahaSWHardware 26 }
+
+yshVITable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YshVIEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Voltage and electric current"
+	::= { yamahaSWHardware 27 }
+
+-- module table
+
+yshModuleEntry OBJECT-TYPE
+	SYNTAX	YshModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An interface module entry."
+	INDEX	{ yshModuleIndex }
+	::= { yshModuleTable 1 }
+
+YshModuleEntry ::=
+	SEQUENCE {
+		yshModuleIndex
+			INTEGER,
+		yshModuleName
+			DisplayString,
+		yshModuleType
+			INTEGER,
+		yshModuleExtendSlotNumber
+			INTEGER,
+		yshModuleSerialNumber
+			DisplayString,
+		yshModuleVersion
+			DisplayString,
+		yshModuleRunLed
+			INTEGER
+	}
+
+yshModuleIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each module."
+	::= { yshModuleEntry 1 }
+
+yshModuleName OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A name of the module."
+	::= { yshModuleEntry 2 }
+
+yshModuleType OBJECT-TYPE
+	SYNTAX	INTEGER { main(1), extend(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A module type.  'main' means a main module, and 'extend'
+		means an extend module which is installed in a extend
+		slot."
+	::= { yshModuleEntry 3 }
+
+yshModuleExtendSlotNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An extend slot number of a module.  If a variable
+		yrhModuleType is indicated as 'main', this variable
+		has no mean."
+	::= { yshModuleEntry 4 }
+
+yshModuleSerialNumber OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A serial number string of the module."
+	::= { yshModuleEntry 5 }
+
+yshModuleVersion OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A version string of the module."
+	::= { yshModuleEntry 6 }
+
+yshModuleRunLed OBJECT-TYPE
+	SYNTAX	INTEGER { on(1), off(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"RUN LED status of th module."
+	::= { yshModuleEntry 7 }
+
+-- power module table
+
+yshPowerModuleEntry OBJECT-TYPE
+	SYNTAX	YshPowerModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A power module entry."
+	INDEX	{ yshPowerModuleIndex }
+	::= { yshPowerModuleTable 1 }
+
+YshPowerModuleEntry ::=
+	SEQUENCE {
+		yshPowerModuleIndex
+			INTEGER,
+		yshPowerModuleStatus
+			INTEGER
+	}
+
+yshPowerModuleIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each power module."
+	::= { yshPowerModuleEntry 1 }
+
+yshPowerModuleStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		up(1),
+		down(2),
+		notInstalled(3)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A status of a power module."
+	::= { yshPowerModuleEntry 2 }
+
+-- fan module table
+
+yshFanModuleEntry OBJECT-TYPE
+	SYNTAX	YshFanModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A fan module entry."
+	INDEX	{ yshFanModuleIndex }
+	::= { yshFanModuleTable 1 }
+
+YshFanModuleEntry ::=
+	SEQUENCE {
+		yshFanModuleIndex
+			INTEGER,
+		yshFanModuleStatus
+			INTEGER
+	}
+
+yshFanModuleIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each fan module."
+	::= { yshFanModuleEntry 1 }
+
+yshFanModuleStatus OBJECT-TYPE
+	SYNTAX	INTEGER { good(1), noGood(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A status of a fan module."
+	::= { yshFanModuleEntry 2 }
+
+-- multi cpu table
+
+yshMultiCpuEntry OBJECT-TYPE
+	SYNTAX	YshMultiCpuEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A multi CPU entry."
+	INDEX	{ yshMultiCpuIndex }
+	::= { yshMultiCpuTable 1 }
+
+YshMultiCpuEntry ::=
+	SEQUENCE {
+		yshMultiCpuIndex
+			INTEGER,
+		yshMultiCpuName
+			DisplayString,
+		yshMultiCpuUtil5sec
+			Gauge,
+		yshMultiCpuUtil1min
+			Gauge,
+		yshMultiCpuUtil5min
+			Gauge,
+		yshMultiCpuUtil5secTrapThreshold
+			Gauge,
+		yshMultiCpuUtil1minTrapThreshold
+			Gauge,
+		yshMultiCpuUtil5minTrapThreshold
+			Gauge
+	}
+
+yshMultiCpuIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each CPU."
+	::= { yshMultiCpuEntry 1 }
+
+yshMultiCpuName OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..16))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A name of the CPU."
+	::= { yshMultiCpuEntry 2 }
+
+yshMultiCpuUtil5sec OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 5 seconds."
+	::= { yshMultiCpuEntry 3 }
+
+yshMultiCpuUtil1min OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 1 minutes."
+	::= { yshMultiCpuEntry 4 }
+
+yshMultiCpuUtil5min OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 5 minutes."
+	::= { yshMultiCpuEntry 5 }
+
+yshMultiCpuUtil5secTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil5sec is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yshMultiCpuEntry 6 }
+
+yshMultiCpuUtil1minTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil1min is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yshMultiCpuEntry 7 }
+
+yshMultiCpuUtil5minTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil5min is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yshMultiCpuEntry 8 }
+
+-- stack table
+
+yshStackEntry OBJECT-TYPE
+	SYNTAX	YshStackEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A stack entry."
+	INDEX	{ yshStackId }
+	::= { yshStackTable 1 }
+
+YshStackEntry ::=
+	SEQUENCE {
+		yshStackId
+			INTEGER,
+		yshStackMemorySize
+			INTEGER,
+		yshStackFlashROMSize
+			INTEGER,
+		yshStackMemoryUtil
+			Gauge,
+		yshStackCpuUtil5sec
+			Gauge,
+		yshStackCpuUtil1min
+			Gauge,
+		yshStackCpuUtil5min
+			Gauge
+	}
+
+yshStackId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Stack ID."
+	::= { yshStackEntry 1 }
+
+yshStackMemorySize OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The size of main memory of the stack in bytes."
+	::= { yshStackEntry 2 }
+
+yshStackFlashROMSize OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The size of the internal Flash ROM of the stack in bytes."
+	::= { yshStackEntry 3 }
+
+yshStackMemoryUtil OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The utilization in percentage of main memory of the stack."
+	::= { yshStackEntry 4 }
+
+yshStackCpuUtil5sec OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 5 seconds of the stack."
+	::= { yshStackEntry 5 }
+
+yshStackCpuUtil1min OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 1 minutes of the stack."
+	::= { yshStackEntry 6 }
+
+yshStackCpuUtil5min OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 5 minutes of the stack."
+	::= { yshStackEntry 7 }
+
+-- yshTemperatureTable
+
+yshTemperatureEntry OBJECT-TYPE
+	SYNTAX	YshTemperatureEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A temperature entry."
+	INDEX	{ yshTemperatureStackId, yshTemperatureDeviceType, yshTemperatureDeviceIndex }
+	::= { yshTemperatureTable 1 }
+
+YshTemperatureEntry ::=
+	SEQUENCE {
+		yshTemperatureStackId
+			INTEGER,
+		yshTemperatureDeviceType
+			INTEGER,
+		yshTemperatureDeviceIndex
+			INTEGER,
+		yshTemperatureValue
+			Gauge
+	}
+
+yshTemperatureStackId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Stack ID. When stack is not used, this value is used '1'."
+	::= { yshTemperatureEntry 1 }
+
+yshTemperatureDeviceType OBJECT-TYPE
+	SYNTAX	INTEGER { cpu(1), phy(2), sfp(3), thermal-sensor(4), pse(5) }
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Device type."
+	::= { yshTemperatureEntry 2 }
+
+yshTemperatureDeviceIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Device index. For example, if there are two CPUs, the value are 1 and 2."
+	::= { yshTemperatureEntry 3 }
+
+yshTemperatureValue OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Device temperature value."
+	::= { yshTemperatureEntry 4 }
+
+-- yshTemperatureStatusTable
+
+yshTemperatureStatusEntry OBJECT-TYPE
+	SYNTAX	YshTemperatureStatusEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A temperature status entry."
+	INDEX	{ yshTemperatureStatusStackId, yshTemperatureStatusDeviceType }
+	::= { yshTemperatureStatusTable 1 }
+
+YshTemperatureStatusEntry ::=
+	SEQUENCE {
+		yshTemperatureStatusStackId
+			INTEGER,
+		yshTemperatureStatusDeviceType
+			INTEGER,
+		yshTemperatureStatus
+			INTEGER,
+		yshTemperatureStatusNormalThreshold
+			Gauge,
+		yshTemperatureStatusWarningThreshold
+			Gauge,
+		yshTemperatureStatusErrorThreshold
+			Gauge
+	}
+
+yshTemperatureStatusStackId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Stack ID. When stack is not used, this value is used '1'."
+	::= { yshTemperatureStatusEntry 1 }
+
+yshTemperatureStatusDeviceType OBJECT-TYPE
+	SYNTAX	INTEGER { cpu(1), phy(2), sfp(3), thermal-sensor(4), pse(5) }
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Device type."
+	::= { yshTemperatureStatusEntry 2 }
+
+yshTemperatureStatus OBJECT-TYPE
+	SYNTAX	INTEGER { normal(1), warning(2), error(3) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Device status value. Warning exceeds the High threshold.
+		Error exceeds the Alarm threshold."
+	::= { yshTemperatureStatusEntry 3 }
+
+yshTemperatureStatusNormalThreshold OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Threshold for judging as Normal state"
+	::= { yshTemperatureStatusEntry 4 }
+
+yshTemperatureStatusWarningThreshold OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Threshold for judging as Warning state"
+	::= { yshTemperatureStatusEntry 5 }
+
+yshTemperatureStatusErrorThreshold OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Threshold for judging as Error state"
+	::= { yshTemperatureStatusEntry 6 }
+
+-- yshFanTable
+
+yshFanEntry OBJECT-TYPE
+	SYNTAX	YshFanEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A fan entry."
+	INDEX	{ yshFanStackId, yshFanIndex }
+	::= { yshFanTable 1 }
+
+YshFanEntry ::=
+	SEQUENCE {
+		yshFanStackId
+			INTEGER,
+		yshFanIndex
+			INTEGER,
+		yshFanRpm
+			Gauge,
+		yshFanStatus
+			INTEGER
+	}
+
+yshFanStackId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Stack ID. When stack is not used, this value is used '1'."
+	::= { yshFanEntry 1 }
+
+yshFanIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Fan index. For example, if there are two Fans, the value are 1 and 2."
+	::= { yshFanEntry 2 }
+
+yshFanRpm OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Fan spped."
+	::= { yshFanEntry 3 }
+
+yshFanStatus OBJECT-TYPE
+	SYNTAX	INTEGER { normal(1), stopped(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Fan status."
+	::= { yshFanEntry 4 }
+
+-- yshFanSpeedStatusTable
+
+yshFanSpeedStatusEntry OBJECT-TYPE
+	SYNTAX	YshFanSpeedStatusEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A fan speed status entry."
+	INDEX	{ yshFanSpeedStatusStackId }
+	::= { yshFanSpeedStatusTable 1 }
+
+YshFanSpeedStatusEntry ::=
+	SEQUENCE {
+		yshFanSpeedStatusStackId
+			INTEGER,
+		yshFanSpeedStatus
+			INTEGER
+	}
+
+yshFanSpeedStatusStackId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Stack ID. When stack is not used, this value is used '1'."
+	::= { yshFanSpeedStatusEntry 1 }
+
+yshFanSpeedStatus OBJECT-TYPE
+	SYNTAX	INTEGER { low(1), middle(2), high(3) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Fan speed status."
+	::= { yshFanSpeedStatusEntry 2 }
+
+-- yshVITable
+
+yshVIEntry OBJECT-TYPE
+	SYNTAX	YshVIEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A voltage and electric current entry."
+	INDEX	{ yshVIStackId }
+	::= { yshVITable 1 }
+
+YshVIEntry ::=
+	SEQUENCE {
+		yshVIStackId
+			INTEGER,
+		yshVIVoltage
+			Gauge,
+		yshVICurrent
+			Gauge,
+		yshVIVoltageLowerThreshold
+			Gauge,
+		yshVIVoltageUpperThreshold
+			Gauge,
+		yshVICurrentAvailableMax
+			Gauge
+	}
+
+yshVIStackId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Stack ID. When stack is not used, this value is used '1'."
+	::= { yshVIEntry 1 }
+
+yshVIVoltage OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Voltage(mV)."
+	::= { yshVIEntry 2 }
+
+yshVICurrent OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Electric current(mA)."
+	::= { yshVIEntry 3 }
+
+yshVIVoltageLowerThreshold OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Lower threshold of voltage(mV)."
+	::= { yshVIEntry 4 }
+
+yshVIVoltageUpperThreshold OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Upper threshold of voltage(mV)."
+	::= { yshVIEntry 5 }
+
+yshVICurrentAvailableMax OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Maximum available electric current value(mA)."
+	::= { yshVIEntry 6 }
+
+-- Traps
+
+yshMemoryUtilTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES	{ yshMemoryUtil }
+	DESCRIPTION
+		"This trap indicates that the value of the variable
+		yrhMemoryUtil is over the value of the variable
+		yrhMemoryUtilTrapThreshold."
+	::= 1
+
+yshCpuUtilTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshCpuUtil5sec, yshCpuUtil1min, yshCpuUtil5min }
+	DESCRIPTION
+		"This trap indicates that the CPU utilization is over
+		the threshold value."
+	::= 2
+
+yshSystemAlarmTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshInboxTemperature }
+	DESCRIPTION
+		"This trap indicates that the system ALARM LED is on.
+		At the option, the variables, yrhPowerModuleStatus and
+		yrhFanModuleStatus for each module, will follow in the
+		variable-bindings field"
+	::= 3
+
+yshMultiCpuUtilTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshMultiCpuIndex, yshMultiCpuName, yshMultiCpuUtil5sec, yshMultiCpuUtil1min, yshMultiCpuUtil5min }
+	DESCRIPTION
+		"This trap indicates that the multi CPU utilization is over
+		the threshold value."
+	::= 4
+
+yshTemperatureStatusNormalTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshTemperatureStatusStackId, yshTemperatureStatusDeviceType, yshTemperatureStatus, yshTemperatureStatusNormalThreshold, yshTemperatureValue }
+	DESCRIPTION
+		"This trap indicates that the temperature value has changed to Normal status."
+	::= 5
+
+yshTemperatureStatusWarningTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshTemperatureStatusStackId, yshTemperatureStatusDeviceType, yshTemperatureStatus, yshTemperatureStatusWarningThreshold, yshTemperatureValue }
+	DESCRIPTION
+		"This trap indicates that the temperature value has changed to Warning status."
+	::= 6
+
+yshTemperatureStatusErrorTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshTemperatureStatusStackId, yshTemperatureStatusDeviceType, yshTemperatureStatus, yshTemperatureStatusErrorThreshold, yshTemperatureValue }
+	DESCRIPTION
+		"This trap indicates that the temperature value has changed to Error status."
+	::= 7
+
+yshFanStoppedTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshFanStackId, yshFanIndex }
+	DESCRIPTION
+		"This trap indicates that the fan is stopped."
+	::= 8
+
+yshFanSpeedUpTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshFanSpeedStatusStackId, yshFanSpeedStatus }
+	DESCRIPTION
+		"This trap indicates that the fan speed has increased.
+		fan speed has changed to High."
+	::= 9
+
+yshFanSpeedDownTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshFanSpeedStatusStackId, yshFanSpeedStatus }
+	DESCRIPTION
+		"This trap indicates that the fan speed has decreased.
+		fan speed has changed to not High."
+	::= 10
+
+yshVIVoltageErrorTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshVIStackId, yshVIVoltage, yshVIVoltageLowerThreshold, yshVIVoltageUpperThreshold }
+	DESCRIPTION
+		"This trap indicates that the voltage value became error.
+		Exceeded or below the threshold."
+	::= 11
+
+yshVICurrentErrorTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWHardware
+	VARIABLES { yshVIStackId, yshVICurrent, yshVICurrentAvailableMax }
+	DESCRIPTION
+		"This trap indicates that the electric current value became error.
+		Over current occurred."
+	::= 12
+
+END

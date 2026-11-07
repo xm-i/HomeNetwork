@@ -1,0 +1,18 @@
+-- $Id: yamaha-smi.mib.txt,v 1.3 2017/02/20 08:36:55 ogino Exp $
+
+YAMAHA-SMI DEFINITIONS ::= BEGIN
+
+IMPORTS
+    enterprises
+            FROM RFC1155-SMI;
+
+yamaha OBJECT IDENTIFIER ::= { enterprises 1182 }
+
+yamahaProducts OBJECT IDENTIFIER ::= { yamaha 1 }
+
+yamahaRT OBJECT IDENTIFIER ::= { yamaha 2 }
+
+yamahaSW OBJECT IDENTIFIER ::= { yamaha 3 }
+
+END
+

@@ -124,3 +124,47 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
   - batch-server
   - dns-server.internal (10.0.0.2 / DNS & DHCP)
   - aqua-raspi (アクアリウムIoT)
+  - rtx1210 (10.0.0.1 / ルーター / SNMPポーリング & トラップ監視)
+  - xs708t (10.0.0.3 / 10G L2スイッチ / ポートトラフィック監視)
+  - nas (10.0.0.5 / ASUSTOR NAS / CPU・メモリ・温度・ディスク健康状態監視)
+
+## ネットワーク機器・NASのSNMP設定
+
+### 1. RTX1210 (ルーター)
+RTX1210 にログインし、`administrator` コマンドで管理者モードに入ってから以下を実行します。
+
+```text
+administrator
+(パスワード入力)
+
+# 監視サーバー (10.0.3.3) に対するSNMP許可とコミュニティ名
+snmp host 10.0.3.3 public
+snmpv2c host 10.0.3.3 public
+
+# SNMPトラップ送信先と有効化
+snmp trap host 10.0.3.3 public
+snmpv2c trap host 10.0.3.3 public
+snmp trap enable snmp all
+snmp trap enable switch default all
+
+# 設定保存
+save
+```
+
+### 2. L2 Switch (XS708T)
+Web管理画面（またはCLI）から以下を設定します：
+- **SNMP**: 有効（Version 2c）
+- **Read-Only コミュニティ名**: `public`
+- **Trap レシーバー**: IP `10.0.3.3`、Port `162`、Community `public`
+- **Trap イベント**: リンクダウン、再起動、ループ検知等にチェック
+
+### 3. ASUSTOR NAS
+ADM（管理画面）の「サービス」→「SNMP」から以下を設定します：
+- **SNMPサービスを有効化**: チェック
+- **バージョン**: v1 / v2c
+- **コミュニティ**: `public`
+- **SNMPトラップを有効化**:
+  - トラップサーバーIP: `10.0.3.3`
+  - コミュニティ: `public`
+
+※ Discord / Slack へのトラップ通知を行いたい場合は、`./watch_server/docker/env_file` の `SNMP_TRAP_WEBHOOK_URL` に Webhook URL を設定してください。

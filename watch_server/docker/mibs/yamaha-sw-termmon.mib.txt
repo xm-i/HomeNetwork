@@ -1,0 +1,170 @@
+-- $Id: yamaha-sw-termmon.mib.txt,v 1.1 2017/11/20 07:51:04 mizushima Exp $
+
+YAMAHA-SW-TERMMON DEFINITIONS ::= BEGIN
+
+IMPORTS
+    IpAddress
+        FROM RFC1155-SMI
+    OBJECT-TYPE
+        FROM RFC-1212
+    DisplayString
+        FROM RFC1213-MIB
+    TRAP-TYPE
+        FROM RFC-1215
+    yamahaSWTermMon
+        FROM YAMAHA-SW;
+
+-- Information
+    
+ystmEnableTrap OBJECT-TYPE
+    SYNTAX  INTEGER { enabled(1), disabled(2) }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "If this value is set to 1, trap notification such as ystmTrap is enabled.
+        If this value is set to 2, trap notification is disabled."
+    ::= { yamahaSWTermMon 1 }
+
+ystmIfTermTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF YstmIfTermEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "termmon list (port)"
+    ::= { yamahaSWTermMon 3 }
+
+ystmIfTermEntry OBJECT-TYPE
+    SYNTAX  YstmIfTermEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "termmon status entry."
+    INDEX   { ystmIfTermIndex }
+    ::= { ystmIfTermTable 1 }
+
+YstmIfTermEntry ::=
+    SEQUENCE {
+        ystmIfTermIndex
+            INTEGER,
+        ystmIfTermDescr
+            DisplayString,
+        ystmIfTermStatus
+            INTEGER,
+        ystmIfTermMonTypeFrame
+            INTEGER,
+        ystmIfTermMonTypeLldp
+            INTEGER
+    }
+
+ystmIfTermIndex OBJECT-TYPE
+    SYNTAX  INTEGER (1..2147483647)
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The value of the instance of the ifIndex object,
+        defined in IF-MIB, for the interface corresponding
+        to this port."
+    ::= { ystmIfTermEntry 1 }
+
+ystmIfTermDescr OBJECT-TYPE
+    SYNTAX  DisplayString (SIZE (0..255))
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Descr"
+    ::= { ystmIfTermEntry 2 }
+    
+ystmIfTermStatus OBJECT-TYPE
+    SYNTAX  INTEGER { up(1), down(2), idle(3) }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "status of each port"
+    ::= { ystmIfTermEntry 3 }
+    
+ystmIfTermMonTypeFrame OBJECT-TYPE
+    SYNTAX  INTEGER { enabled(1), disabled(2) }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "monitor by frame"
+    ::= { ystmIfTermEntry 4 }
+
+ystmIfTermMonTypeLldp OBJECT-TYPE
+    SYNTAX  INTEGER { enabled(1), disabled(2) }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "monitor by LLDP"
+    ::= { ystmIfTermEntry 5 }
+
+ystmIpTermTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF YstmIpTermEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "termmon list (IP address)"
+    ::= { yamahaSWTermMon 4 }
+
+ystmIpTermEntry OBJECT-TYPE
+    SYNTAX  YstmIpTermEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "termmon status entry."
+    INDEX   { ystmIpTermIndex }
+    ::= { ystmIpTermTable 1 }
+
+YstmIpTermEntry ::=
+    SEQUENCE {
+        ystmIpTermIndex
+            IpAddress,
+        ystmIpTermDescr
+            DisplayString,
+        ystmIpTermStatus
+            INTEGER
+    }
+
+ystmIpTermIndex OBJECT-TYPE
+    SYNTAX  IpAddress
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "IP address"
+    ::= { ystmIpTermEntry 1 }
+
+ystmIpTermDescr OBJECT-TYPE
+    SYNTAX  DisplayString (SIZE (0..255))
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Descr"
+    ::= { ystmIpTermEntry 2 }
+    
+ystmIpTermStatus OBJECT-TYPE
+    SYNTAX  INTEGER { up(1), down(2), idle(3) }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "status of each IP address"
+    ::= { ystmIpTermEntry 3 }
+    
+-- Traps
+
+ystmIfTermTrap TRAP-TYPE
+    ENTERPRISE  yamahaSWTermMon
+    VARIABLES   { ystmIfTermDescr, ystmIfTermStatus }
+    DESCRIPTION
+        "This trap signifies that the status of each port 
+        has changed to up or down."
+    ::= 1
+
+ystmIpTermTrap TRAP-TYPE
+    ENTERPRISE  yamahaSWTermMon
+    VARIABLES   { ystmIpTermDescr, ystmIpTermStatus }
+    DESCRIPTION
+        "This trap signifies that the status of each IP address 
+        has changed to up or down."
+    ::= 2
+
+END

@@ -77,13 +77,13 @@
         - restart watch containers
 
     - name: Run docker-compose
-      command: docker compose up -d --remove-orphans
+      command: docker compose up -d --build --remove-orphans
       args:
         chdir: /home/watch/docker
       changed_when: false
 
   handlers:
     - name: restart watch containers
-      command: docker compose up -d --force-recreate --remove-orphans
+      command: docker compose up -d --build --force-recreate --remove-orphans
       args:
         chdir: /home/watch/docker

@@ -1,0 +1,143 @@
+-- $Id: yamaha-sw-errdisable.mib.txt,v 1.3 2018/04/12 01:19:00 h-toda Exp $
+
+YAMAHA-SW-ERRDISABLE DEFINITIONS ::= BEGIN
+
+IMPORTS
+	mgmt, NetworkAddress, IpAddress, Counter, Gauge, TimeTicks
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	DisplayString, PhysAddress
+		FROM RFC1213-MIB
+	TRAP-TYPE
+		FROM RFC-1215
+	yamahaSWErrDisable
+		FROM YAMAHA-SW;
+
+-- Information
+
+ysedConfigTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YsedConfigEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"List of errdisable configuration entries."
+	::= { yamahaSWErrDisable 1 }
+
+ysedConfigEntry OBJECT-TYPE
+	SYNTAX	YsedConfigEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Errdisable configuration entry."
+	INDEX	{ ysedConfigIndex }
+	::= { ysedConfigTable 1 }
+
+YsedConfigEntry ::=
+	SEQUENCE {
+		ysedConfigIndex
+			INTEGER,
+		ysedConfigFunction
+			INTEGER,
+		ysedConfigAutoRecovery
+			INTEGER,
+		ysedConfigRecoveryInterval
+			INTEGER
+	}
+
+ysedConfigIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Unique value of each configuration."
+	::= { ysedConfigEntry 1 }
+	
+ysedConfigFunction OBJECT-TYPE
+	SYNTAX	INTEGER { bpduguard(1), loopdetect(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of function."
+	::= { ysedConfigEntry 2 }
+
+ysedConfigAutoRecovery OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If this value is set to 1, auto recovery function is enabled.
+		If this value is set to 2, auto recovery function is disabled."
+	::= { ysedConfigEntry 3 }
+
+ysedConfigRecoveryInterval OBJECT-TYPE
+	SYNTAX	INTEGER (10..1000000)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of auto recovery interval."
+	::= { ysedConfigEntry 4 }
+	
+ysedEnableTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If this value is set to 1, trap notification such as ysedTrap is enabled.
+		If this value is set to 2, trap notification is disabled."
+	::= { yamahaSWErrDisable 2 }
+
+ysedIfTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YsedIfEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"List of errdisable status entries."
+	::= { yamahaSWErrDisable 3 }
+
+ysedIfEntry OBJECT-TYPE
+	SYNTAX	YsedIfEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Errdisable status entry."
+	INDEX	{ ysedIfIndex }
+	::= { ysedIfTable 1 }
+
+YsedIfEntry ::=
+	SEQUENCE {
+		ysedIfIndex
+			INTEGER,
+		ysedIfStatus
+			INTEGER
+	}
+
+ysedIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of the instance of the ifIndex object,
+        defined in IF-MIB, for the interface corresponding
+        to this port."
+	::= { ysedIfEntry 1 }
+	
+ysedIfStatus OBJECT-TYPE
+	SYNTAX	INTEGER { normal(1), bpduguard(2), loopdetect(3), portsecurity(4) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Port status."
+	::= { ysedIfEntry 2 }
+	
+-- Traps
+
+ysedTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWErrDisable
+	VARIABLES	{ ysedIfStatus }
+	DESCRIPTION
+		"This trap signifies that the status of each port 
+		has changed to errdisabled or normal."
+	::= 1
+
+END

@@ -1,0 +1,533 @@
+-- $Id: yamaha-rt-hardware.mib.txt,v 1.20 2019/06/27 11:54:59 y-nishihara Exp $
+
+YAMAHA-RT-HARDWARE DEFINITIONS ::= BEGIN
+
+IMPORTS
+	mgmt, NetworkAddress, IpAddress, Counter, Gauge, TimeTicks
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	DisplayString
+		FROM RFC1213-MIB
+	TRAP-TYPE
+		FROM RFC-1215
+	yamahaRTHardware
+		FROM YAMAHA-RT;
+
+-- hardware information
+
+yrhCpuType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		i386(1),
+		i486(2),
+		pentium(3),
+		sh3(4),
+		msp2000(5),
+		ixp1200(6),
+		ad6846(7),
+		msp2100(8),
+		powerQuick3(9),
+		ixp422(10),
+		cn5010(12),
+		c1000(13),
+		qorIQP2(14),
+		qorIQP1(15),
+		a38x(16),
+		vCPU(17)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The CPU type."
+	::= { yamahaRTHardware 1 }
+
+yrhMemorySize OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The size of main memory in bytes."
+	::= { yamahaRTHardware 2 }
+
+yrhFlashROMSize OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The size of the internal Flash ROM in bytes."
+	::= { yamahaRTHardware 3 }
+
+yrhMemoryUtil OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The utilization in percentage of main memory."
+	::= { yamahaRTHardware 4 }
+
+yrhCpuUtil5sec OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 5 seconds."
+	::= { yamahaRTHardware 5 }
+
+yrhCpuUtil1min OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 1 minutes."
+	::= { yamahaRTHardware 6 }
+
+yrhCpuUtil5min OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 5 minutes."
+	::= { yamahaRTHardware 7 }
+
+yrhMemoryUtilTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable yrhMemoryUtil is over
+		this variable, the system will produce
+		yrhMemoryUtilTrap.  If this value is set as 0, the
+		system will never send yrhMemoryUtilTrap."
+	::= { yamahaRTHardware 8 }
+
+yrhCpuUtil5secTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil5sec is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yamahaRTHardware 9 }
+
+yrhCpuUtil1minTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil1min is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yamahaRTHardware 10 }
+
+yrhCpuUtil5minTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil5min is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yamahaRTHardware 11 }
+
+yrhModuleTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrhModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of the main and interface modules"
+	::= { yamahaRTHardware 12 }
+
+yrhPowerModuleTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrhPowerModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of the power modules"
+	::= { yamahaRTHardware 13 }
+
+yrhFanModuleTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrhFanModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of the fan modules"
+	::= { yamahaRTHardware 14 }
+
+yrhInboxTemperature OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A temperature in the box."
+	::= { yamahaRTHardware 15 }
+
+yrhSystemAlarm OBJECT-TYPE
+	SYNTAX	INTEGER { on(1), off(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicate the condition when the ALARM LED is on or off."
+	::= { yamahaRTHardware 16 }
+
+yrhEnableSystemAlarmTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicate the system will send yrhSystemAlarmTrap when
+		the variable yrhSystemTrap is turned to on."
+	::= { yamahaRTHardware 17 }
+
+yrhMultiCpuTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrhMultiCpuEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of the multi CPU"
+	::= { yamahaRTHardware 18 }
+
+
+
+-- module table
+
+yrhModuleEntry OBJECT-TYPE
+	SYNTAX	YrhModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An interface module entry."
+	INDEX	{ yrhModuleIndex }
+	::= { yrhModuleTable 1 }
+
+YrhModuleEntry ::=
+	SEQUENCE {
+		yrhModuleIndex
+			INTEGER,
+		yrhModuleName
+			DisplayString,
+		yrhModuleType
+			INTEGER,
+		yrhModuleExtendSlotNumber
+			INTEGER,
+		yrhModuleSerialNumber
+			DisplayString,
+		yrhModuleVersion
+			DisplayString,
+		yrhModuleRunLed
+			INTEGER
+	}
+
+yrhModuleIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each module."
+	::= { yrhModuleEntry 1 }
+
+yrhModuleName OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A name of the module."
+	::= { yrhModuleEntry 2 }
+
+yrhModuleType OBJECT-TYPE
+	SYNTAX	INTEGER { main(1), extend(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A module type.  'main' means a main module, and 'extend'
+		means an extend module which is installed in a extend
+		slot."
+	::= { yrhModuleEntry 3 }
+
+yrhModuleExtendSlotNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An extend slot number of a module.  If a variable
+		yrhModuleType is indicated as 'main', this variable
+		has no mean."
+	::= { yrhModuleEntry 4 }
+
+yrhModuleSerialNumber OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A serial number string of the module."
+	::= { yrhModuleEntry 5 }
+
+yrhModuleVersion OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A version string of the module."
+	::= { yrhModuleEntry 6 }
+
+yrhModuleRunLed OBJECT-TYPE
+	SYNTAX	INTEGER { on(1), off(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"RUN LED status of th module."
+	::= { yrhModuleEntry 7 }
+
+-- power module table
+
+yrhPowerModuleEntry OBJECT-TYPE
+	SYNTAX	YrhPowerModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A power module entry."
+	INDEX	{ yrhPowerModuleIndex }
+	::= { yrhPowerModuleTable 1 }
+
+YrhPowerModuleEntry ::=
+	SEQUENCE {
+		yrhPowerModuleIndex
+			INTEGER,
+		yrhPowerModuleStatus
+			INTEGER
+	}
+
+yrhPowerModuleIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each power module."
+	::= { yrhPowerModuleEntry 1 }
+
+yrhPowerModuleStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		up(1),
+		down(2),
+		notInstalled(3)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A status of a power module."
+	::= { yrhPowerModuleEntry 2 }
+
+-- fan module table
+
+yrhFanModuleEntry OBJECT-TYPE
+	SYNTAX	YrhFanModuleEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A fan module entry."
+	INDEX	{ yrhFanModuleIndex }
+	::= { yrhFanModuleTable 1 }
+
+YrhFanModuleEntry ::=
+	SEQUENCE {
+		yrhFanModuleIndex
+			INTEGER,
+		yrhFanModuleStatus
+			INTEGER
+	}
+
+yrhFanModuleIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each fan module."
+	::= { yrhFanModuleEntry 1 }
+
+yrhFanModuleStatus OBJECT-TYPE
+	SYNTAX	INTEGER { good(1), noGood(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A status of a fan module."
+	::= { yrhFanModuleEntry 2 }
+
+-- multi cpu table
+
+yrhMultiCpuEntry OBJECT-TYPE
+	SYNTAX	YrhMultiCpuEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A multi CPU entry."
+	INDEX	{ yrhMultiCpuIndex }
+	::= { yrhMultiCpuTable 1 }
+
+YrhMultiCpuEntry ::=
+	SEQUENCE {
+		yrhMultiCpuIndex
+			INTEGER,
+		yrhMultiCpuName
+			DisplayString,
+		yrhMultiCpuUtil5sec
+			Gauge,
+		yrhMultiCpuUtil1min
+			Gauge,
+		yrhMultiCpuUtil5min
+			Gauge,
+		yrhMultiCpuUtil5secTrapThreshold
+			Gauge,
+		yrhMultiCpuUtil1minTrapThreshold
+			Gauge,
+		yrhMultiCpuUtil5minTrapThreshold
+			Gauge
+	}
+
+yrhMultiCpuIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each CPU."
+	::= { yrhMultiCpuEntry 1 }
+
+yrhMultiCpuName OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..16))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A name of the CPU."
+	::= { yrhMultiCpuEntry 2 }
+
+yrhMultiCpuUtil5sec OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 5 seconds."
+	::= { yrhMultiCpuEntry 3 }
+
+yrhMultiCpuUtil1min OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 1 minutes."
+	::= { yrhMultiCpuEntry 4 }
+
+yrhMultiCpuUtil5min OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The average utilization of CPU in 5 minutes."
+	::= { yrhMultiCpuEntry 5 }
+
+yrhMultiCpuUtil5secTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil5sec is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yrhMultiCpuEntry 6 }
+
+yrhMultiCpuUtil1minTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil1min is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yrhMultiCpuEntry 7 }
+
+yrhMultiCpuUtil5minTrapThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If the value of the variable cpuUtil5min is over this
+		variable, the system will produce cpuUtilTrap.  If
+		this value is set as 0, the system will never send
+		cpuUtilTrap."
+	::= { yrhMultiCpuEntry 8 }
+
+
+
+-- Traps
+
+yrhMemoryUtilTrap TRAP-TYPE
+	ENTERPRISE	yamahaRTHardware
+	VARIABLES	{ yrhMemoryUtil }
+	DESCRIPTION
+		"This trap indicates that the value of the variable
+		yrhMemoryUtil is over the value of the variable
+		yrhMemoryUtilTrapThreshold."
+	::= 1
+
+yrhCpuUtilTrap TRAP-TYPE
+	ENTERPRISE	yamahaRTHardware
+	VARIABLES { yrhCpuUtil5sec, yrhCpuUtil1min, yrhCpuUtil5min }
+	DESCRIPTION
+		"This trap indicates that the CPU utilization is over
+		the threshold value."
+	::= 2
+
+yrhSystemAlarmTrap TRAP-TYPE
+	ENTERPRISE	yamahaRTHardware
+	VARIABLES { yrhInboxTemperature }
+	DESCRIPTION
+		"This trap indicates that the system ALARM LED is on.
+		At the option, the variables, yrhPowerModuleStatus and
+		yrhFanModuleStatus for each module, will follow in the
+		variable-bindings field"
+	::= 3
+
+yrhMultiCpuUtilTrap TRAP-TYPE
+	ENTERPRISE	yamahaRTHardware
+	VARIABLES { yrhMultiCpuIndex, yrhMultiCpuName, yrhMultiCpuUtil5sec, yrhMultiCpuUtil1min, yrhMultiCpuUtil5min }
+	DESCRIPTION
+		"This trap indicates that the multi CPU utilization is over
+		the threshold value."
+	::= 4
+
+yrhCpuThresholdOver TRAP-TYPE
+	ENTERPRISE	yamahaRTHardware
+	VARIABLES { yrhCpuUtil5sec }
+	DESCRIPTION
+		"This trap indicates that the CPU utilization was over
+		the threshold value."
+	::= 5
+
+yrhCpuThresholdUnder TRAP-TYPE
+	ENTERPRISE	yamahaRTHardware
+	VARIABLES { yrhCpuUtil5sec }
+	DESCRIPTION
+		"This trap indicates that the CPU utilization was under
+		the threshold value."
+	::= 6
+
+yrhMemoryThresholdOver TRAP-TYPE
+	ENTERPRISE	yamahaRTHardware
+	VARIABLES	{ yrhMemoryUtil }
+	DESCRIPTION
+		"This trap indicates that the MEMORY utilization was over
+		the threshold value."
+	::= 7
+
+yrhMemoryThresholdUnder TRAP-TYPE
+	ENTERPRISE	yamahaRTHardware
+	VARIABLES	{ yrhMemoryUtil }
+	DESCRIPTION
+		"This trap indicates that the MEMORY utilization was under
+		the threshold value."
+	::= 8
+
+END

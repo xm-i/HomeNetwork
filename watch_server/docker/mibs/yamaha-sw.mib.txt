@@ -1,0 +1,21 @@
+-- $Id: yamaha-sw.mib.txt,v 1.4 2019/12/23 09:20:52 onoyama Exp $
+
+YAMAHA-SW DEFINITIONS ::= BEGIN
+
+IMPORTS
+	yamahaSW
+		FROM YAMAHA-SMI;
+
+-- group for YAMAHA SW series
+
+yamahaSWHardware		OBJECT IDENTIFIER ::= { yamahaSW 1 }
+yamahaSWFirmware		OBJECT IDENTIFIER ::= { yamahaSW 2 }
+yamahaSWL2ms			OBJECT IDENTIFIER ::= { yamahaSW 5 }
+yamahaSWErrDisable		OBJECT IDENTIFIER ::= { yamahaSW 6 }
+yamahaSWRmon			OBJECT IDENTIFIER ::= { yamahaSW 7 }
+yamahaSWTermMon 		OBJECT IDENTIFIER ::= { yamahaSW 8 }
+yamahaSWBridge			OBJECT IDENTIFIER ::= { yamahaSW 9 }
+yamahaSWPowerEthernet	OBJECT IDENTIFIER ::= { yamahaSW 10 }
+yamahaSWLoopDetect		OBJECT IDENTIFIER ::= { yamahaSW 11 }
+
+END

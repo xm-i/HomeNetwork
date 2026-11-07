@@ -1,0 +1,251 @@
+--$Id: yamaha-rt-ip.mib.txt,v 1.6 2013/12/11 07:09:04 a_onoda Exp $
+
+YAMAHA-RT-IP DEFINITIONS ::= BEGIN
+
+IMPORTS
+	mgmt, NetworkAddress, IpAddress, Counter, Gauge, TimeTicks
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	DisplayString, PhysAddress
+		FROM RFC1213-MIB
+	TRAP-TYPE
+		FROM RFC-1215
+	IANAifType
+		FROM IANAifType-MIB
+	yamahaRTIp
+		FROM YAMAHA-RT;
+
+-- Information of IP
+
+yrIpKeepaliveTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIpKeepaliveEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of IP keepalive entries."
+	::= { yamahaRTIp 1 }
+
+yrIpHeartBeatTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIpHeartBeatEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of a state notified of heartbeat packet."
+	::= { yamahaRTIp 2 }
+
+yrIpHeartbeat2Table OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIpHeartbeat2Entry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of a state notified of heartbeat2 packet."
+	::= { yamahaRTIp 3 }
+
+-- interface generic
+
+yrIpKeepaliveEntry OBJECT-TYPE
+	SYNTAX	YrIpKeepaliveEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A IP keepalive entry."
+	INDEX	{ yrIpKeepaliveIndex }
+	::= { yrIpKeepaliveTable 1 }
+
+YrIpKeepaliveEntry ::=
+	SEQUENCE {
+		yrIpKeepaliveIndex
+			INTEGER,
+		yrIpKeepaliveType
+			INTEGER,
+		yrIpKeepaliveStatus
+			INTEGER
+	}
+
+yrIpKeepaliveIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each configuration of IP keepalive."
+	::= { yrIpKeepaliveEntry 1 }
+
+
+yrIpKeepaliveType OBJECT-TYPE
+	SYNTAX	INTEGER { icmp-echo(1) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A type of IP keepalive."
+	::= { yrIpKeepaliveEntry 2 }
+
+yrIpKeepaliveStatus OBJECT-TYPE
+	SYNTAX	INTEGER { up(1), down(2), up-wait(3), down-wait(4) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A status of IP keepalive."
+	::= { yrIpKeepaliveEntry 3 }
+
+-- Heartbeat
+
+yrIpHeartBeatEntry OBJECT-TYPE
+	SYNTAX	YrIpHeartBeatEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of a state notified of heartbeat packet."
+	INDEX	{ yrIpHeartBeatIndex }
+	::= { yrIpHeartBeatTable 1 }
+
+YrIpHeartBeatEntry ::=
+	SEQUENCE {
+		yrIpHeartBeatIndex
+			INTEGER,
+		yrIpHeartBeatName
+			DisplayString,
+		yrIpHeartBeatFrom
+			IpAddress,
+		yrIpHeartBeatRecvTime
+			DisplayString,
+		yrIpHeartBeatInterval
+			INTEGER
+	}
+
+yrIpHeartBeatIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A index for heartbeat infomation."
+	::= { yrIpHeartBeatEntry 1 }
+
+yrIpHeartBeatName OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique name of a state nnotified of heartbeat packet."
+	::= { yrIpHeartBeatEntry 2 }
+
+yrIpHeartBeatFrom OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"IP address of a state notified of heartbeat packet."
+	::= { yrIpHeartBeatEntry 3 }
+
+yrIpHeartBeatRecvTime OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Last received time of heartbeat packet."
+	::= { yrIpHeartBeatEntry 4 }
+
+yrIpHeartBeatInterval OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Receiving interval of heartbeat packet."
+	::= { yrIpHeartBeatEntry 5 }
+
+-- Heartbeat2
+
+yrIpHeartbeat2Entry OBJECT-TYPE
+	SYNTAX	YrIpHeartbeat2Entry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of a state notified of heartbeat2 packet."
+	INDEX	{ yrIpHeartbeat2Index }
+	::= { yrIpHeartbeat2Table 1 }
+
+YrIpHeartbeat2Entry ::=
+	SEQUENCE {
+		yrIpHeartbeat2Index
+			INTEGER,
+		yrIpHeartbeat2Name
+			DisplayString,
+		yrIpHeartbeat2From
+			IpAddress,
+		yrIpHeartbeat2RecvTime
+			DisplayString,
+		yrIpHeartbeat2Interval
+			INTEGER
+	}
+
+yrIpHeartbeat2Index OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A index for heartbeat2 infomation."
+	::= { yrIpHeartbeat2Entry 1 }
+
+yrIpHeartbeat2Name OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique name of a state nnotified of heartbeat2 packet."
+	::= { yrIpHeartbeat2Entry 2 }
+
+yrIpHeartbeat2From OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"IP address of a state notified of heartbeat2 packet."
+	::= { yrIpHeartbeat2Entry 3 }
+
+yrIpHeartbeat2RecvTime OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Last received time of heartbeat2 packet."
+	::= { yrIpHeartbeat2Entry 4 }
+
+yrIpHeartbeat2Interval OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Receiving interval of heartbeat2 packet."
+	::= { yrIpHeartbeat2Entry 5 }
+
+-- Traps
+
+yrIpKeepaliveDown TRAP-TYPE
+	ENTERPRISE	yamahaRTIp
+	VARIABLES	{ yrIpKeepaliveIndex }
+	DESCRIPTION
+		"This trap signifies that a IP keepalive status is down."
+	::= 1
+
+yrIpKeepaliveUp TRAP-TYPE
+	ENTERPRISE	yamahaRTIp
+	VARIABLES	{ yrIpKeepaliveIndex }
+	DESCRIPTION
+		"This trap signifies that a IP keepalive status is up."
+	::= 2
+
+yrIpHeartBeat TRAP-TYPE
+	ENTERPRISE	yamahaRTIp
+	VARIABLES	{ yrIpHeartBeatIndex, yrIpHeartBeatName }
+	DESCRIPTION
+		"This trap signifies that heartbeat packet has not received for a given period."
+	::= 3
+
+yrIpHeartbeat2 TRAP-TYPE
+	ENTERPRISE	yamahaRTIp
+	VARIABLES	{ yrIpHeartbeat2Index, yrIpHeartbeat2Name }
+	DESCRIPTION
+		"This trap signifies that heartbeat2 packet has not received for a given period."
+	::= 4
+
+END

@@ -1,0 +1,2614 @@
+-- $Id: yamaha-rt-interfaces.mib.txt,v 1.31 2019/06/27 11:54:59 y-nishihara Exp $
+
+YAMAHA-RT-INTERFACES DEFINITIONS ::= BEGIN
+
+IMPORTS
+	mgmt, NetworkAddress, IpAddress, Counter, Gauge, TimeTicks
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	DisplayString, PhysAddress
+		FROM RFC1213-MIB
+	TRAP-TYPE
+		FROM RFC-1215
+	IANAifType
+		FROM IANAifType-MIB
+	yamahaRTInterfaces
+		FROM YAMAHA-RT;
+
+-- Information of interfaces
+
+yrIfNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of physical and logical network interfaces
+		(regardless of their current state) present on this
+		system."
+	::= { yamahaRTInterfaces 1 }
+
+yrIfTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of physical and logical interface entries.
+		The number of entries is given by the value of
+		yrIfNumber."
+	::= { yamahaRTInterfaces 2 }
+
+yrIfBindTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfBindEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of binding information entries between
+		a lower and a higher interfaces.  Typical lower
+		interface is a physical one, and typical higher
+		interfae is a PP."
+	::= { yamahaRTInterfaces 3 }
+
+
+yrIfLanTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfLanEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of LAN interface entries."
+	::= { yamahaRTInterfaces 4 }
+
+yrIfBriTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfBriEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of a BRI interface entries."
+	::= { yamahaRTInterfaces 5 }
+
+yrIfPriTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfPriEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of PRI interface entries."
+	::= { yamahaRTInterfaces 6 }
+
+yrIfIsdnTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfIsdnEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of a status of ISDN for a BRI or a PRI
+		interface entries."
+	::= { yamahaRTInterfaces 7 }
+
+enableYrIfIsdnStatusChange OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicate that the system will send a trap,
+		yrIfIsdnStatusChange, when the variables,
+		yrIfIsdnStatus, are changed, or not."
+	::= { yamahaRTInterfaces 8 }
+
+yrIfPpTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfPpEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of PP interface entries."
+	::= { yamahaRTInterfaces 9 }
+
+yrIfPpDisplayAtMib2 OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The flag which the pp interfaces information will be
+		displaied as MIB-2 interfaces object, or not."
+	::= { yamahaRTInterfaces 10 }
+
+enableYrIfPpLinkTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicate that the system will send a trap,
+		yrIfPpLinkUp or yrIfPpLinkDown, when the PP link
+		status change."
+	::= { yamahaRTInterfaces 11 }
+
+yrIfClassTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfClassEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A QoS Class for each (LAN and PP) interfaces."
+	::= { yamahaRTInterfaces 12 }
+
+yrIfPhysicalPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfPhysicalPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Physical Port of interface"
+	::= { yamahaRTInterfaces 13 }
+
+yrIfPpNumberEachInterfaceTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfPpNumberEachInterfaceEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Physical Port of interface"
+	::= { yamahaRTInterfaces 14 }
+
+yrIfPpIndexEachInterfaceTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfPpIndexEachInterfaceEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Physical Port of interface"
+	::= { yamahaRTInterfaces 15 }
+
+yrIfTunnelTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfTunnelEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of TUNNEL interface entries."
+	::= { yamahaRTInterfaces 16 }
+
+yrIfUrlfilterTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF YrIfUrlfilterEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of Url filter infomation."
+	::= { yamahaRTInterfaces 17 }
+
+yrIfUrlfilterExtDbTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF YrIfUrlfilterExtDbEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of information of Url filter that referred an external database for category."
+	::= { yamahaRTInterfaces 18 }
+
+yrIfLoopbackTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfLoopbackEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of LOOPBACK interface entries."
+	::= { yamahaRTInterfaces 19 }
+
+yrIfUrlfilterExtDbRepTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF YrIfUrlfilterExtDbRepEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of information of Url filter that referred an external database for reputation."
+	::= { yamahaRTInterfaces 20 }
+
+yrIfMobileTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfMobileEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of mobile information."
+	::= { yamahaRTInterfaces 21 }
+
+yrIfSwitchDisplayAtMib2 OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The flag which the controlled switch's interfaces information will be
+		displaied as MIB-2 interfaces object, or not."
+	::= { yamahaRTInterfaces 22 }
+
+yrIfTunnelDisplayAtMib2 OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The flag which the tunnel interfaces information will be
+		displaied as MIB-2 interfaces object, or not."
+	::= { yamahaRTInterfaces 23 }
+
+yrIfUrlfilterHttpsProxyTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF YrIfUrlfilterHttpsProxyEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of information of Url filter that referred a https proxy."
+	::= { yamahaRTInterfaces 26 }
+
+yrIfWwanTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfWwanEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of WWAN interface entries."
+	::= { yamahaRTInterfaces 27 }
+
+yrIfWwanModTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrIfWwanModEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of WWAN module information."
+	::= { yamahaRTInterfaces 28 }
+
+-- interface generic
+
+yrIfEntry OBJECT-TYPE
+	SYNTAX	YrIfEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A physical interface entry."
+	INDEX	{ yrIfIndex }
+	::= { yrIfTable 1 }
+
+YrIfEntry ::=
+	SEQUENCE {
+		yrIfIndex
+			INTEGER,
+		yrIfDescr
+			DisplayString,
+		yrIfType
+			INTEGER,
+		yrIfSpecific
+			OBJECT IDENTIFIER
+	}
+
+yrIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each interface.  Its value
+		ranges between 1 and the value of ifNumber.  The
+		value for each interface must remain constant at
+		least from one re-initialization of the entity's
+		network management system to the next re-
+		initialization."
+	::= { yrIfEntry 1 }
+
+yrIfDescr OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A textual string containing information about the
+		interface.  This string should include the name of
+		the manufacturer, the product name and the version
+		of the hardware interface."
+	::= { yrIfEntry 2 }
+
+yrIfType OBJECT-TYPE
+	SYNTAX	INTEGER { lan(1), bri(2), pri(3), pp(4), tunnel(5), loopback(6), wwan(7) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of an interface."
+	::= { yrIfEntry 3 }
+
+yrIfSpecific OBJECT-TYPE
+	SYNTAX	OBJECT IDENTIFIER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A reference to MIB definitions specific to the
+		particular media which is indicated by yrIfType."
+	::= { yrIfEntry 4 }
+
+
+-- binding of interfaces
+
+yrIfBindEntry OBJECT-TYPE
+	SYNTAX	YrIfBindEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of binding information entries between
+		a high and a low layer interfaces."
+	INDEX	{ yrIfBindHighLayer, yrIfBindLowLayer }
+	::= { yrIfBindTable 1 }
+
+YrIfBindEntry ::=
+	SEQUENCE {
+		yrIfBindHighLayer
+			INTEGER,
+		yrIfBindLowLayer
+			INTEGER,
+		yrIfBindStatus
+			INTEGER
+	}
+
+yrIfBindHighLayer OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A high layer interface index value of the table
+		yrIfTable."
+	::= { yrIfBindEntry 1 }
+
+yrIfBindLowLayer OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A low layer interface index value of the table
+		yrIfTable."
+	::= { yrIfBindEntry 2 }
+
+yrIfBindStatus OBJECT-TYPE
+	SYNTAX	INTEGER { active(1), notActive(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A status of the relationship between two high/low
+		layer interfaces."
+	::= { yrIfBindEntry 3 }
+
+
+-- LAN interface
+
+yrIfLanEntry OBJECT-TYPE
+	SYNTAX	YrIfLanEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A LAN interface entry."
+	INDEX	{ yrIfLanIndex }
+	::= { yrIfLanTable 1 }
+
+YrIfLanEntry ::=
+	SEQUENCE {
+		yrIfLanIndex
+			INTEGER,
+		yrIfLanLink
+			INTEGER,
+		yrIfLanMediaType
+			INTEGER,
+		yrIfLanPromiscuous
+			INTEGER
+	}
+
+yrIfLanIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each LAN interface.  This value is
+		equal to yrIfIndex for a correspond interface."
+	::= { yrIfLanEntry 1 }
+
+yrIfLanLink OBJECT-TYPE
+	SYNTAX	INTEGER { up(1), down(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A link status of a LAN interface."
+	::= { yrIfLanEntry 2 }
+
+yrIfLanMediaType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		lan100base-fdx(1),
+		lan100base-hdx(2),
+		lan10base-fdx(3),
+		lan10base-hdx(4),
+		lan1000base-fdx(5),
+		lan1000base-hdx(6),
+		lan1000basex-fdx(7),
+		lan10gbase-t-fdx(8)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A media type of a LAN interface."
+	::= { yrIfLanEntry 3 }
+
+yrIfLanPromiscuous OBJECT-TYPE
+	SYNTAX	INTEGER { promiscuous(1), nonPromiscuous(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A promiscuous status of a LAN interface."
+	::= { yrIfLanEntry 4 }
+
+-- BRI interface
+
+yrIfBriEntry OBJECT-TYPE
+	SYNTAX	YrIfBriEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A BRI interface entry."
+	INDEX	{ yrIfBriIndex }
+	::= { yrIfBriTable 1 }
+
+YrIfBriEntry ::=
+	SEQUENCE {
+		yrIfBriIndex
+			INTEGER,
+		yrIfBriType
+			INTEGER,
+		yrIfBriLayer1
+			INTEGER,
+		yrIfBriLED1
+			INTEGER,
+		yrIfBriLED2
+			INTEGER,
+		yrIfBriMultiplexNumber
+			INTEGER,
+		yrIfBriMultiplexSpeed1
+			INTEGER,
+		yrIfBriMultiplexSpeed2
+			INTEGER
+	}
+
+yrIfBriIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each BRI interface.  This value is
+		equal to yrIfIndex for a correspond interface."
+	::= { yrIfBriEntry 1 }
+
+yrIfBriType OBJECT-TYPE
+	SYNTAX	INTEGER { leased(1), isdn-ntt(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line type of a BRI interface."
+	::= { yrIfBriEntry 2 }
+
+yrIfBriLayer1 OBJECT-TYPE
+	SYNTAX	INTEGER { up(1), down(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A layer 1 status of a BRI interface.  If the system
+		has a L1 LED, this variable is equal to a LED status."
+	::= { yrIfBriEntry 3 }
+
+yrIfBriLED1 OBJECT-TYPE
+	SYNTAX	INTEGER { on(1), off(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A B1 LED status of a BRI interface."
+	::= { yrIfBriEntry 4 }
+
+yrIfBriLED2 OBJECT-TYPE
+	SYNTAX	INTEGER { on(1), off(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A B2 LED status of a BRI interface."
+	::= { yrIfBriEntry 5 }
+
+yrIfBriMultiplexNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A multiplex number of a BRI interface.  If this
+		variable's value is N, line speeds of each multiplex
+		is displayed in from yrIfBriMultiplexSpeed1 to
+		yrIfPriMultiplexSpeedN.
+
+		If the BRI interface is configured as ISDN, this
+		valiable and follows have no mean."
+	::= { yrIfBriEntry 6 }
+
+yrIfBriMultiplexSpeed1 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a first multiplex of a BRI
+		interface."
+	::= { yrIfBriEntry 7 }
+
+yrIfBriMultiplexSpeed2 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a first multiplex of a BRI
+		interface."
+	::= { yrIfBriEntry 8 }
+
+
+
+-- PRI interface
+
+yrIfPriEntry OBJECT-TYPE
+	SYNTAX	YrIfPriEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A PRI interface entry."
+	INDEX	{ yrIfPriIndex }
+	::= { yrIfPriTable 1 }
+
+YrIfPriEntry ::=
+	SEQUENCE {
+		yrIfPriIndex
+			INTEGER,
+		yrIfPriType
+			INTEGER,
+		yrIfPriLayer1
+			INTEGER,
+		yrIfPriLoopLED
+			INTEGER,
+		yrIfPriTestLED
+			INTEGER,
+		yrIfPriMultiplexNumber
+			INTEGER,
+		yrIfPriMultiplexSpeed1
+			INTEGER,
+		yrIfPriMultiplexSpeed2
+			INTEGER,
+		yrIfPriMultiplexSpeed3
+			INTEGER,
+		yrIfPriMultiplexSpeed4
+			INTEGER,
+		yrIfPriMultiplexSpeed5
+			INTEGER,
+		yrIfPriMultiplexSpeed6
+			INTEGER,
+		yrIfPriMultiplexSpeed7
+			INTEGER,
+		yrIfPriMultiplexSpeed8
+			INTEGER,
+		yrIfPriMultiplexSpeed9
+			INTEGER,
+		yrIfPriMultiplexSpeed10
+			INTEGER,
+		yrIfPriMultiplexSpeed11
+			INTEGER,
+		yrIfPriMultiplexSpeed12
+			INTEGER,
+		yrIfPriMultiplexSpeed13
+			INTEGER,
+		yrIfPriMultiplexSpeed14
+			INTEGER,
+		yrIfPriMultiplexSpeed15
+			INTEGER,
+		yrIfPriMultiplexSpeed16
+			INTEGER,
+		yrIfPriMultiplexSpeed17
+			INTEGER,
+		yrIfPriMultiplexSpeed18
+			INTEGER,
+		yrIfPriMultiplexSpeed19
+			INTEGER,
+		yrIfPriMultiplexSpeed20
+			INTEGER,
+		yrIfPriMultiplexSpeed21
+			INTEGER,
+		yrIfPriMultiplexSpeed22
+			INTEGER,
+		yrIfPriMultiplexSpeed23
+			INTEGER,
+		yrIfPriMultiplexSpeed24
+			INTEGER
+	}
+
+yrIfPriIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each PRI interface.  This value is
+		equal to yrIfIndex for a correspond interface."
+	::= { yrIfPriEntry 1 }
+
+yrIfPriType OBJECT-TYPE
+	SYNTAX	INTEGER { leased(1), isdn-ntt(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line type of a PRI interface."
+	::= { yrIfPriEntry 2 }
+
+yrIfPriLayer1 OBJECT-TYPE
+	SYNTAX	INTEGER { up(1), down(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A layer 1 status of a PRI interface.  If the system
+		has a L1 LED, this variable is equal to a LED status."
+	::= { yrIfPriEntry 3 }
+
+yrIfPriLoopLED OBJECT-TYPE
+	SYNTAX	INTEGER { on(1), off(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A LOOP LED status of a PRI interface."
+	::= { yrIfPriEntry 4 }
+
+yrIfPriTestLED OBJECT-TYPE
+	SYNTAX	INTEGER { on(1), off(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A TEST LED status of a PRI interface."
+	::= { yrIfPriEntry 5 }
+
+yrIfPriMultiplexNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A multiplex number of a PRI interface.  If this
+		variable's value is N, line speeds of each multiplex
+		is displayed in from yrIfPriMultiplexSpeed1 to
+		yrIfPriMultiplexSpeedN.
+
+		If the PRI interface is configured as ISDN, this
+		valiable and follows have no mean."
+	::= { yrIfPriEntry 6 }
+
+yrIfPriMultiplexSpeed1 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a first multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 7 }
+
+yrIfPriMultiplexSpeed2 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a second multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 8 }
+
+yrIfPriMultiplexSpeed3 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a third multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 9 }
+
+yrIfPriMultiplexSpeed4 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 4th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 10 }
+
+yrIfPriMultiplexSpeed5 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 5th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 11 }
+
+yrIfPriMultiplexSpeed6 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 6th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 12 }
+
+yrIfPriMultiplexSpeed7 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 7th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 13 }
+
+yrIfPriMultiplexSpeed8 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of an 8th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 14 }
+
+yrIfPriMultiplexSpeed9 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 9th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 15 }
+
+yrIfPriMultiplexSpeed10 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 10th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 16 }
+
+yrIfPriMultiplexSpeed11 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of an 11th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 17 }
+
+yrIfPriMultiplexSpeed12 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 12th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 18 }
+
+yrIfPriMultiplexSpeed13 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 13th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 19 }
+
+yrIfPriMultiplexSpeed14 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 14th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 20 }
+
+yrIfPriMultiplexSpeed15 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 15th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 21 }
+
+yrIfPriMultiplexSpeed16 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 16th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 22 }
+
+yrIfPriMultiplexSpeed17 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 17th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 23 }
+
+yrIfPriMultiplexSpeed18 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 18th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 24 }
+
+yrIfPriMultiplexSpeed19 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 19th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 25 }
+
+yrIfPriMultiplexSpeed20 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 20th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 26 }
+
+yrIfPriMultiplexSpeed21 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 21th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 27 }
+
+yrIfPriMultiplexSpeed22 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 22th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 28 }
+
+yrIfPriMultiplexSpeed23 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 23th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 29 }
+
+yrIfPriMultiplexSpeed24 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line speed in bit/s of a 24th multiplex of a PRI
+		interface."
+	::= { yrIfPriEntry 30 }
+
+
+-- status of ISDN for a BRI or a PRI interface
+
+yrIfIsdnEntry OBJECT-TYPE
+	SYNTAX	YrIfIsdnEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A status of ISDN of a BRI or a PRI interface entry."
+	INDEX	{ yrIfIsdnIndex, yrIfIsdnBch }
+	::= { yrIfIsdnTable 1 }
+
+YrIfIsdnEntry ::=
+	SEQUENCE {
+		yrIfIsdnIndex
+			INTEGER,
+		yrIfIsdnBch
+			INTEGER,
+		yrIfIsdnStatus
+			INTEGER,
+		yrIfIsdnPeerAddress
+			DisplayString,
+		yrIfIsdnDisconnectReason
+			INTEGER
+	}
+
+yrIfIsdnIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each BRI or PRI interface.  This
+		value is equal to yrIfBriIndex/yrIfPriIndex and
+		yrIfIndex for a correspond interface."
+	::= { yrIfIsdnEntry 1 }
+
+yrIfIsdnBch OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A B-channel number of a BRI/PRI interface.  For a
+		BRI, the valid numbers are only 1 and 2.  For a PRI,
+		the numbers 1 through 23 are valid."
+	::= { yrIfIsdnEntry 2 }
+
+yrIfIsdnStatus OBJECT-TYPE
+	SYNTAX	INTEGER { online(1), offline(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"ISDN or leased line status.  For a BRI interface,
+		this variable links directly with the system's LED, B1
+		or B2."
+	::= { yrIfIsdnEntry 3 }
+
+yrIfIsdnPeerAddress OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A peer's ISDN address.  If the peer has a sub
+		address, it follows the ISDN number with a separator
+		slash (/).  If a line type which is indicated as a
+		variable yrIfBriType or yrIfPriType is leased line,
+		this entry has no meaning."
+	::= { yrIfIsdnEntry 4 }
+
+yrIfIsdnDisconnectReason OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A disconnect reason which is defined in an ISDN
+		specification, JT-Q931, or else.  If a BRI type which
+		is indicated as a variable yrIfBriType or yrIfPriType
+		is leased line, this entry has no meaning."
+	::= { yrIfIsdnEntry 5 }
+
+-- PP interface
+
+yrIfPpEntry OBJECT-TYPE
+	SYNTAX	YrIfPpEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An interface entry containing objects at the
+		subnetwork layer and below for a particular
+		interface."
+	INDEX	{ yrIfPpIndex }
+	::= { yrIfPpTable 1 }
+
+YrIfPpEntry ::=
+	SEQUENCE {
+		yrIfPpIndex
+			INTEGER,
+		yrIfPpDescr
+			DisplayString,
+		yrIfPpType
+			IANAifType,
+		yrIfPpMtu
+			INTEGER,
+		yrIfPpSpeed
+			Gauge,
+--		yrIfPpPhysAddress
+--			PhysAddress,
+		yrIfPpAdminStatus
+			INTEGER,
+		yrIfPpOperStatus
+			INTEGER,
+		yrIfPpLastChange
+			TimeTicks,
+		yrIfPpInOctets
+			Counter,
+		yrIfPpInUcastPkts
+			Counter,
+		yrIfPpInNUcastPkts
+			Counter,
+		yrIfPpInDiscards
+			Counter,
+		yrIfPpInErrors
+			Counter,
+		yrIfPpInUnknownProtos
+			Counter,
+		yrIfPpOutOctets
+			Counter,
+		yrIfPpOutUcastPkts
+			Counter,
+		yrIfPpOutNUcastPkts
+			Counter,
+		yrIfPpOutDiscards
+			Counter,
+		yrIfPpOutErrors
+			Counter,
+		yrIfPpOutQLen
+			Gauge,
+--		yrIfPpSpecific
+--			OBJECT IDENTIFIER
+
+		yrIfPpOutUtil
+			Gauge,
+		yrIfPpOutUtilThreshold
+			Gauge,
+		yrIfPpInUtil
+			Gauge,
+		yrIfPpInUtilThreshold
+			Gauge,
+		yrIfPpAccumulatedConnTime
+			INTEGER,
+		yrIfPpAnonymousUsername
+			DisplayString,
+		yrIfPpHCInOctets
+			Counter64,
+		yrIfPpHCInUcastPkts
+			Counter64,
+		yrIfPpHCInMulticastPkts
+			Counter64,
+		yrIfPpHCInBroadcastPkts
+			Counter64,
+		yrIfPpHCInDiscards
+			Counter64,
+		yrIfPpHCInErrors
+			Counter64,
+		yrIfPpHCInUnknownProtos
+			Counter64,
+		yrIfPpHCOutOctets
+			Counter64,
+		yrIfPpHCOutUcastPkts
+			Counter64,
+		yrIfPpHCOutMulticastPkts
+			Counter64,
+		yrIfPpHCOutBroadcastPkts
+			Counter64,
+		yrIfPpHCOutDiscards
+			Counter64,
+		yrIfPpHCOutErrors
+			Counter64
+	}
+
+yrIfPpIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each interface.  Its value
+		ranges between 1 and the value of ifNumber.  The
+		value for each interface must remain constant at
+		least from one re-initialization of the entity's
+		network management system to the next re-
+		initialization."
+	::= { yrIfPpEntry 1 }
+
+yrIfPpDescr OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A textual string containing information about the
+		interface.  This string should include the name of
+		the manufacturer, the product name and the version
+		of the hardware interface."
+	::= { yrIfPpEntry 2 }
+
+yrIfPpType OBJECT-TYPE
+	SYNTAX	IANAifType
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of interface, distinguished according to
+		the physical/link protocol(s) immediately `below'
+		the network layer in the protocol stack."
+	::= { yrIfPpEntry 3 }
+
+yrIfPpMtu OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The size of the largest datagram which can be
+		sent/received on the interface, specified in
+		octets.	 For interfaces that are used for
+		transmitting network datagrams, this is the size
+		of the largest network datagram that can be sent
+		on the interface."
+	::= { yrIfPpEntry 4 }
+
+yrIfPpSpeed OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An estimate of the interface's current bandwidth
+		in bits per second.  For interfaces which do not
+		vary in bandwidth or for those where no accurate
+		estimation can be made, this object should contain
+		the nominal bandwidth."
+	::= { yrIfPpEntry 5 }
+
+-- deleted --
+--yrIfPpPhysAddress OBJECT-TYPE
+--	SYNTAX	PhysAddress
+--	ACCESS	read-only
+--	STATUS	mandatory
+--	DESCRIPTION
+--		"The interface's address at the protocol layer
+--		immediately `below' the network layer in the
+--		protocol stack.	 For interfaces which do not have
+--		such an address (e.g., a serial line), this object
+--		should contain an octet string of zero length."
+--	::= { yrIfPpEntry 6 }
+
+yrIfPpAdminStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		up(1),	     -- ready to pass packets
+		down(2),
+		testing(3)   -- in some test mode
+	}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The desired state of the interface.  The
+		testing(3) state indicates that no operational
+		packets can be passed."
+	::= { yrIfPpEntry 7 }
+
+yrIfPpOperStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		up(1),	     -- ready to pass packets
+		down(2),
+		testing(3)   -- in some test mode
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current operational state of the interface.
+		The testing(3) state indicates that no operational
+		packets can be passed."
+	::= { yrIfPpEntry 8 }
+
+yrIfPpLastChange OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime at the time the interface
+		entered its current operational state.	If the
+		current state was entered prior to the last re-
+		initialization of the local network management
+		subsystem, then this object contains a zero
+		value."
+	::= { yrIfPpEntry 9 }
+
+yrIfPpInOctets OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of octets received on the
+		interface, including framing characters."
+	::= { yrIfPpEntry 10 }
+
+yrIfPpInUcastPkts OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of subnetwork-unicast packets
+		delivered to a higher-layer protocol."
+	::= { yrIfPpEntry 11 }
+
+yrIfPpInNUcastPkts OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of non-unicast (i.e., subnetwork-
+		broadcast or subnetwork-multicast) packets
+		delivered to a higher-layer protocol."
+	::= { yrIfPpEntry 12 }
+
+yrIfPpInDiscards OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of inbound packets which were chosen
+		to be discarded even though no errors had been
+		detected to prevent their being deliverable to a
+		higher-layer protocol.	One possible reason for
+		discarding such a packet could be to free up
+		buffer space."
+	::= { yrIfPpEntry 13 }
+
+yrIfPpInErrors OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of inbound packets that contained
+		errors preventing them from being deliverable to a
+		higher-layer protocol."
+	::= { yrIfPpEntry 14 }
+
+
+yrIfPpInUnknownProtos OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of packets received via the interface
+		which were discarded because of an unknown or
+		unsupported protocol."
+	::= { yrIfPpEntry 15 }
+
+yrIfPpOutOctets OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of octets transmitted out of the
+		interface, including framing characters."
+	::= { yrIfPpEntry 16 }
+
+yrIfPpOutUcastPkts OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of packets that higher-level
+		protocols requested be transmitted to a
+		subnetwork-unicast address, including those that
+		were discarded or not sent."
+	::= { yrIfPpEntry 17 }
+
+yrIfPpOutNUcastPkts OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of packets that higher-level
+		protocols requested be transmitted to a non-
+		unicast (i.e., a subnetwork-broadcast or
+		subnetwork-multicast) address, including those
+		that were discarded or not sent."
+	::= { yrIfPpEntry 18 }
+
+yrIfPpOutDiscards OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of outbound packets which were chosen
+		to be discarded even though no errors had been
+		detected to prevent their being transmitted.  One
+		possible reason for discarding such a packet could
+		be to free up buffer space."
+	::= { yrIfPpEntry 19 }
+
+yrIfPpOutErrors OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of outbound packets that could not be
+		transmitted because of errors."
+	::= { yrIfPpEntry 20 }
+
+yrIfPpOutQLen OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The length of the output packet queue (in
+		packets)."
+	::= { yrIfPpEntry 21 }
+
+--
+--yrIfPpSpecific OBJECT-TYPE
+--	SYNTAX	OBJECT IDENTIFIER
+--	ACCESS	read-only
+--	STATUS	mandatory
+--	DESCRIPTION
+--		"A reference to MIB definitions specific to the
+--		particular media being used to realize the
+--		interface.  For example, if the interface is
+--		realized by an ethernet, then the value of this
+--		object refers to a document defining objects
+--		specific to ethernet.  If this information is not
+--		present, its value should be set to the OBJECT
+--		IDENTIFIER { 0 0 }, which is a syntatically valid
+--		object identifier, and any conformant
+--		implementation of ASN.1 and BER must be able to
+--		generate and recognize this value."
+--	::= { yrIfPpEntry 22 }
+
+yrIfPpOutUtil OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The utilization of the output packet traffic.  The
+		unit is a percent (%)."
+	::= { yrIfPpEntry 23 }
+
+yrIfPpOutUtilThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"A threshold of a variable yrIfPpOutUtil to send a trap
+		yrIfPpUtilTrap."
+	::= { yrIfPpEntry 24 }
+
+yrIfPpInUtil OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The utilization of the input packet traffic.  The
+		unit is a percent (%)."
+	::= { yrIfPpEntry 25 }
+
+yrIfPpInUtilThreshold OBJECT-TYPE
+	SYNTAX	Gauge (0..100)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"A threshold of a variable yrIfPpInUtil to send a trap
+		yrIfPpUtilTrap."
+	::= { yrIfPpEntry 26 }
+
+yrIfPpAccumulatedConnTime OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An accumulated connection time. The unit is a second(sec)"
+	::= { yrIfPpEntry 27 }
+
+yrIfPpAnonymousUsername OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A connected username for each PP Anonymous interface."
+	::= { yrIfPpEntry 28 }
+
+yrIfPpHCInOctets OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of octets received on the
+		interface, including framing characters."
+	::= { yrIfPpEntry 29 }
+
+yrIfPpHCInUcastPkts OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of subnetwork-unicast packets
+		delivered to a higher-layer protocol."
+	::= { yrIfPpEntry 30 }
+
+yrIfPpHCInMulticastPkts OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of subnetwork-multicast packets
+		delivered to a higher-layer protocol."
+	::= { yrIfPpEntry 31 }
+
+yrIfPpHCInBroadcastPkts OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of subnetwork-broadcast packets
+		delivered to a higher-layer protocol."
+	::= { yrIfPpEntry 32 }
+
+yrIfPpHCInDiscards OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of inbound packets which were chosen
+		to be discarded even though no errors had been
+		detected to prevent their being deliverable to a
+		higher-layer protocol.	One possible reason for
+		discarding such a packet could be to free up
+		buffer space."
+	::= { yrIfPpEntry 33 }
+
+yrIfPpHCInErrors OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of inbound packets that contained
+		errors preventing them from being deliverable to a
+		higher-layer protocol."
+	::= { yrIfPpEntry 34 }
+
+yrIfPpHCInUnknownProtos OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of packets received via the interface
+		which were discarded because of an unknown or
+		unsupported protocol."
+	::= { yrIfPpEntry 35 }
+
+yrIfPpHCOutOctets OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of octets transmitted out of the
+		interface, including framing characters."
+	::= { yrIfPpEntry 36 }
+
+yrIfPpHCOutUcastPkts OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of packets that higher-level
+		protocols requested be transmitted to a
+		subnetwork-unicast address, including those that
+		were discarded or not sent."
+	::= { yrIfPpEntry 37 }
+
+yrIfPpHCOutMulticastPkts OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of packets that higher-level
+		protocols requested be transmitted to a
+		subnetwork-multicast address, including those that
+		were discarded or not sent."
+	::= { yrIfPpEntry 38 }
+
+yrIfPpHCOutBroadcastPkts OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of packets that higher-level
+		protocols requested be transmitted to a
+		subnetwork-broadcast address, including those that
+		were discarded or not sent."
+	::= { yrIfPpEntry 39 }
+
+yrIfPpHCOutDiscards OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of outbound packets which were chosen
+		to be discarded even though no errors had been
+		detected to prevent their being transmitted.  One
+		possible reason for discarding such a packet could
+		be to free up buffer space."
+	::= { yrIfPpEntry 40 }
+
+yrIfPpHCOutErrors OBJECT-TYPE
+	SYNTAX	Counter64
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of outbound packets that could not be
+		transmitted because of errors."
+	::= { yrIfPpEntry 41 }
+
+-- TUNNEL interface
+
+yrIfTunnelEntry OBJECT-TYPE
+	SYNTAX	YrIfTunnelEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A TUNNEL interface entry."
+	INDEX	{ yrIfTunnelIndex }
+	::= { yrIfTunnelTable 1 }
+
+YrIfTunnelEntry ::=
+	SEQUENCE {
+		yrIfTunnelIndex
+			INTEGER,
+		yrIfTunnelLink
+			INTEGER
+	}
+
+yrIfTunnelIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each TUNNEL interface.  This value is
+		equal to yrIfIndex for a correspond interface."
+	::= { yrIfTunnelEntry 1 }
+
+yrIfTunnelLink OBJECT-TYPE
+	SYNTAX	INTEGER { up(1), down(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A link status of a TUNNEL interface."
+	::= { yrIfTunnelEntry 2 }
+
+-- LOOPBACK interface
+
+yrIfLoopbackEntry OBJECT-TYPE
+	SYNTAX	YrIfLoopbackEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A LOOPBACK interface entry."
+	INDEX	{ yrIfLoopbackIndex }
+	::= { yrIfLoopbackTable 1 }
+
+YrIfLoopbackEntry ::=
+	SEQUENCE {
+		yrIfLoopbackIndex
+			INTEGER,
+		yrIfLoopbackLink
+			INTEGER
+	}
+
+yrIfLoopbackIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each LOOPBACK interface.  This value is
+		equal to yrIfIndex for a correspond interface."
+	::= { yrIfLoopbackEntry 1 }
+
+yrIfLoopbackLink OBJECT-TYPE
+	SYNTAX	INTEGER { up(1), down(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A link status of a LOOPBACK interface."
+	::= { yrIfLoopbackEntry 2 }
+
+-- WWAN interface
+
+yrIfWwanEntry OBJECT-TYPE
+	SYNTAX	YrIfWwanEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A WWAN interface entry."
+	INDEX	{ yrIfWwanIndex }
+	::= { yrIfWwanTable 1 }
+
+YrIfWwanEntry ::=
+	SEQUENCE {
+		yrIfWwanIndex
+			INTEGER,
+		yrIfWwanStatus
+			INTEGER,
+		yrIfWwanLastCallInterface
+			DisplayString,
+		yrIfWwanTransmitted
+			Counter,
+		yrIfWwanReceived
+			Counter,
+		yrIfWwanLastCallTime
+			DisplayString,
+		yrIfWwanLastCallConntTime
+			DisplayString
+	}
+
+yrIfWwanIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each WWAN interface.  This value is
+		equal to yrIfIndex for a correspond interface."
+	::= { yrIfWwanEntry 1 }
+
+yrIfWwanStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		up(1),
+		down(2),
+		calling(3)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A state of device."
+	::= { yrIfWwanEntry 2 }
+
+yrIfWwanLastCallInterface OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A last call interface."
+	::= { yrIfWwanEntry 3 }
+
+yrIfWwanTransmitted OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of packets transmitted on
+		the interface."
+	::= { yrIfWwanEntry 4 }
+
+yrIfWwanReceived OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of packets received on the
+		interface."
+	::= { yrIfWwanEntry 5 }
+
+yrIfWwanLastCallTime OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A last call time."
+	::= { yrIfWwanEntry 6 }
+
+yrIfWwanLastCallConntTime OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A last call connection time."
+	::= { yrIfWwanEntry 7 }
+
+-- interface class table
+
+yrIfClassEntry OBJECT-TYPE
+	SYNTAX	YrIfClassEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"The information about output queue classes."
+	INDEX	{ yrIfClassIfIndex, yrIfClassNumber }
+	::= { yrIfClassTable 1 }
+
+YrIfClassEntry ::=
+	SEQUENCE {
+		yrIfClassIfIndex
+			INTEGER,
+		yrIfClassNumber
+			INTEGER,
+		yrIfClassOutOctets
+			Counter,
+		yrIfClassOutPkts
+			Counter,
+		yrIfClassOutDiscards
+			Counter,
+		yrIfClassOutErrors
+			Counter,
+		yrIfClassOutQLen
+			Gauge,
+		yrIfClassDescr
+			DisplayString
+	}
+
+yrIfClassIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The interface on which this class is belong to.  The
+		interface identified by a particular value of this
+		index is the same interface as identified by the same
+		value of yrIfIndex."
+	::= { yrIfClassEntry 1 }
+
+yrIfClassNumber OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A class ID of this class.  This ID indicates a unique
+		 class number."
+	::= { yrIfClassEntry 2 }
+
+yrIfClassOutOctets OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of octets transmitted out of the
+		queue."
+	::= { yrIfClassEntry 3 }
+
+yrIfClassOutPkts OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of packets transmitted out of the queue."
+	::= { yrIfClassEntry 4 }
+
+yrIfClassOutDiscards OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of outbound packets which were chosen
+		to be discarded even though no errors had been
+		detected to prevent their being transmitted.  One
+		possible reason for discarding such a packet could
+		be to free up buffer space."
+	::= { yrIfClassEntry 5 }
+
+yrIfClassOutErrors OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of outbound packets that could not be
+		transmitted because of errors."
+	::= { yrIfClassEntry 6 }
+
+yrIfClassOutQLen OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The length of the output packet queue (in
+		packets)."
+	::= { yrIfClassEntry 7 }
+
+yrIfClassDescr OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A description of the value of yrIfClassNumber.
+		 This string indicates a class number."
+	::= { yrIfClassEntry 8 }
+
+-- Physical Port Infomaiton
+
+yrIfPhysicalPortEntry OBJECT-TYPE
+	SYNTAX	YrIfPhysicalPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of physical port infomation."
+	INDEX	{ yrIfSlotIndex, yrIfPortIndex }
+	::= { yrIfPhysicalPortTable 1 }
+
+YrIfPhysicalPortEntry ::=
+	SEQUENCE {
+		yrIfSlotIndex
+			INTEGER,
+		yrIfPortIndex
+			INTEGER,
+		yrIfInterfaceType
+			INTEGER,
+		yrIfInterfaceNum
+			INTEGER,
+		yrIfPortNumber
+			INTEGER,
+		yrIfPortType
+			INTEGER,
+		yrIfPortLinkState
+			INTEGER
+	}
+
+yrIfSlotIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number for slot of module."
+	::= { yrIfPhysicalPortEntry 1 }
+
+yrIfPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A physical port number of each slot."
+	::= { yrIfPhysicalPortEntry 2 }
+
+
+yrIfInterfaceType OBJECT-TYPE
+	SYNTAX	INTEGER { lan(1), bri(2), pri(3) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A interface type of each port"
+	::= { yrIfPhysicalPortEntry 3 }
+
+
+yrIfInterfaceNum OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A interface number in Interfaces."
+	::= { yrIfPhysicalPortEntry 4 }
+
+yrIfPortNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A port number of each port."
+	::= { yrIfPhysicalPortEntry 5 }
+
+
+yrIfPortType OBJECT-TYPE
+	SYNTAX	INTEGER { lan(1), bri-st(2), bri-u(3), pri(4) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A port type of each port."
+	::= { yrIfPhysicalPortEntry 6 }
+
+
+yrIfPortLinkState OBJECT-TYPE
+	SYNTAX	INTEGER { up(1), down(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A port link-state of each port"
+	::= { yrIfPhysicalPortEntry 7 }
+
+
+yrIfPpNumberEachInterfaceEntry OBJECT-TYPE
+	SYNTAX	YrIfPpNumberEachInterfaceEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of pp number of each physical interface."
+	INDEX	{ yrIfKindIndex, yrIfNumIndex }
+	::= { yrIfPpNumberEachInterfaceTable 1 }
+
+YrIfPpNumberEachInterfaceEntry ::=
+	SEQUENCE {
+		yrIfKindIndex
+			INTEGER,
+		yrIfNumIndex
+			INTEGER,
+		yrIfPpNum
+			INTEGER,
+		yrIfInterfaceIfIndexVal
+			INTEGER
+	}
+
+yrIfKindIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of interface kind."
+	::= { yrIfPpNumberEachInterfaceEntry 1 }
+
+yrIfNumIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number in each interface."
+	::= { yrIfPpNumberEachInterfaceEntry 2 }
+
+
+yrIfPpNum OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A binded pp numbers of each interface."
+	::= { yrIfPpNumberEachInterfaceEntry 3 }
+
+yrIfInterfaceIfIndexVal OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Ifindex value of each interface."
+	::= { yrIfPpNumberEachInterfaceEntry 4 }
+
+
+yrIfPpIndexEachInterfaceEntry OBJECT-TYPE
+	SYNTAX	YrIfPpIndexEachInterfaceEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of Ifindex value of pp number."
+	INDEX	{ yrIfKindPpIndex, yrIfNumPpIndex, yrIfPpNumIndex }
+	::= { yrIfPpIndexEachInterfaceTable 1 }
+
+YrIfPpIndexEachInterfaceEntry ::=
+	SEQUENCE {
+		yrIfKindPpIndex
+			INTEGER,
+		yrIfNumPpIndex
+			INTEGER,
+		yrIfPpNumIndex
+			INTEGER,
+		yrIfPpIfIndexVal
+			INTEGER
+	}
+
+yrIfKindPpIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of interface kind."
+	::= { yrIfPpIndexEachInterfaceEntry 1 }
+
+yrIfNumPpIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of interface."
+	::= { yrIfPpIndexEachInterfaceEntry 2 }
+
+yrIfPpNumIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of pp number"
+	::= { yrIfPpIndexEachInterfaceEntry 3 }
+
+yrIfPpIfIndexVal OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"IfIndex value of binded pp number"
+	::= { yrIfPpIndexEachInterfaceEntry 4 }
+
+
+yrIfUrlfilterEntry OBJECT-TYPE
+	SYNTAX	YrIfUrlfilterEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of url filter information."
+	INDEX	{ yrIfUrlfilterIfIndex, yrIfUrlfilterDir, yrIfUrlfilterId, yrIfUrlfilterStatId }
+	::= { yrIfUrlfilterTable 1 }
+
+YrIfUrlfilterEntry ::=
+	SEQUENCE {
+		yrIfUrlfilterIfIndex
+			INTEGER,
+		yrIfUrlfilterDir
+			INTEGER,
+		yrIfUrlfilterId
+			INTEGER,
+		yrIfUrlfilterStatId
+			INTEGER,
+		yrIfUrlfilterSrcIP
+			IpAddress,
+		yrIfUrlfilterCount
+			Counter
+	}
+
+yrIfUrlfilterIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of interface kind."
+	::= { yrIfUrlfilterEntry 1 }
+
+yrIfUrlfilterDir OBJECT-TYPE
+	SYNTAX	INTEGER { in(1), out(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A direction of url filter. "
+	::= { yrIfUrlfilterEntry 2 }
+
+yrIfUrlfilterId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of url filter."
+	::= { yrIfUrlfilterEntry 3 }
+
+yrIfUrlfilterStatId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of a status of url filter."
+	::= { yrIfUrlfilterEntry 4 }
+
+yrIfUrlfilterSrcIP OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A source IP address of packet that filtered the url filter."
+	::= { yrIfUrlfilterEntry 5 }
+
+yrIfUrlfilterCount OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A number of matching url filter."
+	::= { yrIfUrlfilterEntry 6 }
+
+
+yrIfUrlfilterExtDbEntry OBJECT-TYPE
+	SYNTAX	YrIfUrlfilterExtDbEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of information of Url filter that referred an external database for category."
+	INDEX	{ yrIfUrlfilterExtDbIfIndex, yrIfUrlfilterExtDbDir, yrIfUrlfilterExtDbCategory, yrIfUrlfilterExtDbStatId }
+	::= { yrIfUrlfilterExtDbTable 1 }
+
+YrIfUrlfilterExtDbEntry ::=
+	SEQUENCE {
+		yrIfUrlfilterExtDbIfIndex
+			INTEGER,
+		yrIfUrlfilterExtDbDir
+			INTEGER,
+		yrIfUrlfilterExtDbCategory
+			INTEGER,
+		yrIfUrlfilterExtDbStatId
+			INTEGER,
+		yrIfUrlfilterExtDbSrcIP
+			IpAddress,
+		yrIfUrlfilterExtDbCount
+			Counter
+	}
+
+yrIfUrlfilterExtDbIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of interface kind."
+	::= { yrIfUrlfilterExtDbEntry 1 }
+
+yrIfUrlfilterExtDbDir OBJECT-TYPE
+	SYNTAX	INTEGER { in(1), out(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A direction of url filter. "
+	::= { yrIfUrlfilterExtDbEntry 2 }
+
+yrIfUrlfilterExtDbCategory OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of category."
+	::= { yrIfUrlfilterExtDbEntry 3 }
+
+yrIfUrlfilterExtDbStatId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of a status of url filter."
+	::= { yrIfUrlfilterExtDbEntry 4 }
+
+yrIfUrlfilterExtDbSrcIP OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A source IP address of packet that filtered the url filter."
+	::= { yrIfUrlfilterExtDbEntry 5 }
+
+yrIfUrlfilterExtDbCount OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A number of matching url filter's category."
+	::= { yrIfUrlfilterExtDbEntry 6 }
+
+yrIfUrlfilterExtDbRepEntry OBJECT-TYPE
+	SYNTAX	YrIfUrlfilterExtDbRepEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of information of Url filter that referred an external database for reputation."
+	INDEX	{ yrIfUrlfilterExtDbRepIfIndex, yrIfUrlfilterExtDbRepDir, yrIfUrlfilterExtDbRepLevel, yrIfUrlfilterExtDbRepStatId }
+	::= { yrIfUrlfilterExtDbRepTable 1 }
+
+YrIfUrlfilterExtDbRepEntry ::=
+	SEQUENCE {
+		yrIfUrlfilterExtDbRepIfIndex
+			INTEGER,
+		yrIfUrlfilterExtDbRepDir
+			INTEGER,
+		yrIfUrlfilterExtDbRepLevel
+			INTEGER,
+		yrIfUrlfilterExtDbRepStatId
+			INTEGER,
+		yrIfUrlfilterExtDbRepSrcIP
+			IpAddress,
+		yrIfUrlfilterExtDbRepCountPharmed
+			Counter,
+		yrIfUrlfilterExtDbRepCountUnpharmed
+			Counter
+	}
+
+yrIfUrlfilterExtDbRepIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of interface kind."
+	::= { yrIfUrlfilterExtDbRepEntry 1 }
+
+yrIfUrlfilterExtDbRepDir OBJECT-TYPE
+	SYNTAX	INTEGER { in(1), out(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A direction of url filter. "
+	::= { yrIfUrlfilterExtDbRepEntry 2 }
+
+yrIfUrlfilterExtDbRepLevel OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of security level."
+	::= { yrIfUrlfilterExtDbRepEntry 3 }
+
+yrIfUrlfilterExtDbRepStatId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of a status of url filter."
+	::= { yrIfUrlfilterExtDbRepEntry 4 }
+
+yrIfUrlfilterExtDbRepSrcIP OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A source IP address of packet that filtered the url filter."
+	::= { yrIfUrlfilterExtDbRepEntry 5 }
+
+yrIfUrlfilterExtDbRepCountPharmed OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A number of matching url filter's security level with pharmed."
+	::= { yrIfUrlfilterExtDbRepEntry 6 }
+
+yrIfUrlfilterExtDbRepCountUnpharmed OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A number of matching url filter's security level with unpharmed."
+	::= { yrIfUrlfilterExtDbRepEntry 7 }
+
+yrIfMobileEntry OBJECT-TYPE
+	SYNTAX	YrIfMobileEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of mobile information."
+	INDEX	{ yrIfMobileIndex }
+	::= { yrIfMobileTable 1 }
+
+YrIfMobileEntry ::=
+	SEQUENCE {
+		yrIfMobileIndex
+			INTEGER,
+		yrIfMobileSignalStrength
+			DisplayString,
+		yrIfMobileDeviceName
+			DisplayString,
+		yrIfMobileVendorName
+			DisplayString,
+		yrIfMobileTelephoneNumber
+			DisplayString,
+		yrIfMobileMaximumTransferRate
+			DisplayString,
+		yrIfMobileStatus
+			DisplayString,
+		yrIfMobileTransmitted
+			DisplayString,
+		yrIfMobileReceived
+			DisplayString,
+		yrIfMobileLastCallNumber
+			DisplayString,
+		yrIfMobileLastCallTime
+			DisplayString,
+		yrIfMobileLastCallConntTime
+			DisplayString,
+		yrIfMobileLastCallInterface
+			DisplayString,
+		yrIfMobileAntennaLevel
+			INTEGER,
+		yrIfMobileDbm
+			INTEGER,
+		yrIfMobileSignalQuality
+			INTEGER
+	}
+
+yrIfMobileIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each mobile information.  This value is
+		equal to yrIfIndex for a correspond information."
+	::= { yrIfMobileEntry 1 }
+
+yrIfMobileSignalStrength OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A latest data of signal strength regularly acquired by command."
+	::= { yrIfMobileEntry 2 }
+
+yrIfMobileDeviceName OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A device name of connected device."
+	::= { yrIfMobileEntry 3 }
+
+yrIfMobileVendorName OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A vender name of connected device."
+	::= { yrIfMobileEntry 4 }
+
+yrIfMobileTelephoneNumber OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A telephone number of connected device."
+	::= { yrIfMobileEntry 5 }
+
+yrIfMobileMaximumTransferRate OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A maximum transfer rate of connected device."
+	::= { yrIfMobileEntry 6 }
+
+yrIfMobileStatus OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A state of device."
+	::= { yrIfMobileEntry 7 }
+
+yrIfMobileTransmitted OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A number of accumulation transmission bytes."
+	::= { yrIfMobileEntry 8 }
+
+yrIfMobileReceived OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A number of accumulation reception bytes."
+	::= { yrIfMobileEntry 9 }
+
+yrIfMobileLastCallNumber OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A last call telephone number."
+	::= { yrIfMobileEntry 10 }
+
+yrIfMobileLastCallTime OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A last call time."
+	::= { yrIfMobileEntry 11 }
+
+yrIfMobileLastCallConntTime OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A last call communication time."
+	::= { yrIfMobileEntry 12 }
+
+yrIfMobileLastCallInterface OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A last call interface."
+	::= { yrIfMobileEntry 13 }
+
+yrIfMobileAntennaLevel OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A number of antenna of signal strength."
+	::= { yrIfMobileEntry 14 }
+
+yrIfMobileDbm OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A dBm of signal strength."
+	::= { yrIfMobileEntry 15 }
+
+yrIfMobileSignalQuality OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A signal quality of signal strength."
+	::= { yrIfMobileEntry 16 }
+
+yrIfUrlfilterHttpsProxyEntry OBJECT-TYPE
+	SYNTAX	YrIfUrlfilterHttpsProxyEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of url filter information."
+	INDEX	{ yrIfUrlfilterHttpsProxyIfIndex, yrIfUrlfilterHttpsProxyDir, yrIfUrlfilterHttpsProxyId, yrIfUrlfilterHttpsProxyStatId }
+	::= { yrIfUrlfilterHttpsProxyTable 1 }
+
+YrIfUrlfilterHttpsProxyEntry ::=
+	SEQUENCE {
+		yrIfUrlfilterHttpsProxyIfIndex
+			INTEGER,
+		yrIfUrlfilterHttpsProxyDir
+			INTEGER,
+		yrIfUrlfilterHttpsProxyId
+			INTEGER,
+		yrIfUrlfilterHttpsProxyStatId
+			INTEGER,
+		yrIfUrlfilterHttpsProxySrcIP
+			IpAddress,
+		yrIfUrlfilterHttpsProxyCount
+			Counter
+	}
+
+yrIfUrlfilterHttpsProxyIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of interface kind."
+	::= { yrIfUrlfilterHttpsProxyEntry 1 }
+
+yrIfUrlfilterHttpsProxyDir OBJECT-TYPE
+	SYNTAX	INTEGER { in(1), out(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A direction of url filter. "
+	::= { yrIfUrlfilterHttpsProxyEntry 2 }
+
+yrIfUrlfilterHttpsProxyId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of url filter."
+	::= { yrIfUrlfilterHttpsProxyEntry 3 }
+
+yrIfUrlfilterHttpsProxyStatId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique number of a status of url filter."
+	::= { yrIfUrlfilterHttpsProxyEntry 4 }
+
+yrIfUrlfilterHttpsProxySrcIP OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A source IP address of packet that filtered the url filter."
+	::= { yrIfUrlfilterHttpsProxyEntry 5 }
+
+yrIfUrlfilterHttpsProxyCount OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A number of matching url filter."
+	::= { yrIfUrlfilterHttpsProxyEntry 6 }
+
+yrIfWwanModEntry OBJECT-TYPE
+	SYNTAX	YrIfWwanModEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of WWAN module information."
+	INDEX	{ yrIfWwanModIndex }
+	::= { yrIfWwanModTable 1 }
+
+YrIfWwanModEntry ::=
+	SEQUENCE {
+		yrIfWwanModIndex
+			INTEGER,
+		yrIfWwanModPower
+			INTEGER,
+		yrIfWwanModImei
+			DisplayString,
+		yrIfWwanModMsisdn
+			DisplayString,
+		yrIfWwanModNwStat
+			INTEGER,
+		yrIfWwanModRAT
+			INTEGER,
+		yrIfWwanModAntLevel
+			INTEGER,
+		yrIfWwanModIpAddress
+			IpAddress
+	}
+
+yrIfWwanModIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each WWAN module information.  This value is
+		 equal to yrIfIndex for a correspond information."
+	::= { yrIfWwanModEntry 1 }
+
+yrIfWwanModPower OBJECT-TYPE
+	SYNTAX	INTEGER { on(1), off(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A state of WWAN module power."
+	::= { yrIfWwanModEntry 2 }
+
+yrIfWwanModImei OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A number of IMEI."
+	::= { yrIfWwanModEntry 3 }
+
+yrIfWwanModMsisdn OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A number of MSISDN."
+	::= { yrIfWwanModEntry 4 }
+
+yrIfWwanModNwStat OBJECT-TYPE
+	SYNTAX	INTEGER { ready(1), notReady(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A state of network."
+	::= { yrIfWwanModEntry 5 }
+
+yrIfWwanModRAT OBJECT-TYPE
+	SYNTAX	INTEGER { unknown(1), fourthGeneration-LTE(2), thirdGeneration-3G(3) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A state of radio access technology."
+	::= { yrIfWwanModEntry 6 }
+
+yrIfWwanModAntLevel OBJECT-TYPE
+	SYNTAX	INTEGER { unknown(1), noService(2), level0(3), level1(4), level2(5), level3(6) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A state of antenna of signal strength."
+	::= { yrIfWwanModEntry 7 }
+
+yrIfWwanModIpAddress OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A IP address of WWAN module."
+	::= { yrIfWwanModEntry 8 }
+
+-- Traps
+
+yrIfIsdnStatusChange TRAP-TYPE
+	ENTERPRISE	yamahaRTInterfaces
+	VARIABLES	{ yrIfIsdnIndex, yrIfIsdnBch }
+	DESCRIPTION
+		"This trap signifies that an ISDN status of index/bch is changed."
+	::= 1
+
+yrIfPpLinkDown TRAP-TYPE
+	ENTERPRISE	yamahaRTInterfaces
+	VARIABLES	{ yrIfPpIndex }
+	DESCRIPTION
+		"This trap signifies that a PP interface is down."
+	::= 2
+
+yrIfPpLinkUp TRAP-TYPE
+	ENTERPRISE	yamahaRTInterfaces
+	VARIABLES	{ yrIfPpIndex }
+	DESCRIPTION
+		"This trap signifies that a PP interface is up."
+	::= 3
+
+yrIfPpUtilTrap TRAP-TYPE
+	ENTERPRISE	yamahaRTInterfaces
+	VARIABLES	{ yrIfPpIndex, yrIfPpOutUtil, yrIfPpInUtil }
+	DESCRIPTION
+		"This trap signifies that the change of the
+		utilization of a PP interface crosses the threshold."
+	::= 4
+
+yrIfTunnelLinkDown TRAP-TYPE
+	ENTERPRISE	yamahaRTInterfaces
+	VARIABLES	{ yrIfTunnelIndex }
+	DESCRIPTION
+		"This trap signifies that a TUNNEL interface is down."
+	::= 5
+
+yrIfTunnelLinkUp TRAP-TYPE
+	ENTERPRISE	yamahaRTInterfaces
+	VARIABLES	{ yrIfTunnelIndex }
+	DESCRIPTION
+		"This trap signifies that a TUNNEL interface is up."
+	::= 6
+
+yrIfPpAnonymousLinkDownWithUsername TRAP-TYPE
+	ENTERPRISE	yamahaRTInterfaces
+	VARIABLES	{ yrIfPpIndex, yrIfPpAnonymousUsername }
+	DESCRIPTION
+		"This trap signifies that a PP Anonymous interface is down with connected username."
+	::= 7
+
+yrIfPpAnonymousLinkUpWithUsername TRAP-TYPE
+	ENTERPRISE	yamahaRTInterfaces
+	VARIABLES	{ yrIfPpIndex, yrIfPpAnonymousUsername }
+	DESCRIPTION
+		"This trap signifies that a PP Anonymous interface is up with connected username."
+	::= 8
+
+yrIfMobileStatusTrap TRAP-TYPE
+	ENTERPRISE	yamahaRTInterfaces
+	VARIABLES	{ yrIfMobileIndex, yrIfMobileAntennaLevel, yrIfMobileDbm, yrIfMobileSignalQuality }
+	DESCRIPTION
+		"This trap signifies that a number of antenna of signal strength
+		 became below the threshold."
+	::= 9
+
+yrIfWwanModStatTrp TRAP-TYPE
+	ENTERPRISE	yamahaRTInterfaces
+	VARIABLES	{ yrIfWwanModIndex, yrIfWwanModAntLevel }
+	DESCRIPTION
+		"This trap signifies that a number of antenna of signal strength
+		 became below the threshold."
+	::= 10
+
+END

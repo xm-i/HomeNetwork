@@ -1,0 +1,275 @@
+-- $Id: yamaha-sw-power-ethernet.mib.txt,v 1.1 2019/12/23 09:20:52 onoyama Exp $
+
+YAMAHA-SW-POWER-ETHERNET DEFINITIONS ::= BEGIN
+
+IMPORTS
+	Gauge
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	DisplayString
+		FROM RFC1213-MIB
+	TRAP-TYPE
+		FROM RFC-1215
+	yamahaSWPowerEthernet
+		FROM YAMAHA-SW;
+
+-- Information
+
+yspeEnableTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Whether or not send SNMP traps about PoE."
+	::= { yamahaSWPowerEthernet 1 }
+
+yspeUnitSupplySetting OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"PoE function(system) Enable/Disable."
+	::= { yamahaSWPowerEthernet 2 }
+
+yspeUnitTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YspeUnitEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"List of PoE unit entries."
+	::= { yamahaSWPowerEthernet 3 }
+
+yspeUnitEntry OBJECT-TYPE
+	SYNTAX	YspeUnitEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"PoE unit entry."
+	INDEX	{ yspeUnitStackId }
+	::= { yspeUnitTable 1 }
+
+YspeUnitEntry ::=
+	SEQUENCE {
+		yspeUnitStackId
+			INTEGER,
+		yspeUnitSupplyPower
+			Gauge,
+		yspeUnitPowerFailure
+			INTEGER,
+		yspeUnitGuardBandStatus
+			INTEGER,
+		yspeUnitGuardBandValue
+			Gauge
+	}
+
+yspeUnitStackId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Stack ID. When stack is not used, this value is used '1'."
+	::= { yspeUnitEntry 1 }
+	
+yspeUnitSupplyPower OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"PoE Unit entire power consumption."
+	::= { yspeUnitEntry 2 }
+
+yspeUnitPowerFailure OBJECT-TYPE
+	SYNTAX	INTEGER { normal(1), failure(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"PoE unit status is whether or not failure."
+	::= { yspeUnitEntry 3 }
+
+yspeUnitGuardBandStatus OBJECT-TYPE
+	SYNTAX	INTEGER { not-operating(1), operating(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Guard band status.
+		A value of not-operating(1) - Guard band is not operating because remaining power is greater than guard band setting value.
+		A value of not-operating operating(2) - Guart band is operating because remaining power is less than or equal to guard band setting value."
+	::= { yspeUnitEntry 4 }
+
+yspeUnitGuardBandValue OBJECT-TYPE
+	SYNTAX	Gauge (0..30000)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Guard-band value (mW)."
+	::= { yspeUnitEntry 5 }
+
+yspePortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YspePortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"List of PoE port entries."
+	::= { yamahaSWPowerEthernet 4 }
+
+yspePortEntry OBJECT-TYPE
+	SYNTAX	YspePortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"PoE port entry."
+	INDEX	{ yspePortStackId, yspePortIndex }
+	::= { yspePortTable 1 }
+
+YspePortEntry ::=
+	SEQUENCE {
+		yspePortStackId
+			INTEGER,
+		yspePortIndex
+			INTEGER,
+		yspePortDescr
+			DisplayString,
+		yspePortSupplySetting
+			INTEGER,
+		yspePortDetectClass
+			INTEGER,
+		yspePortSupplyState
+			INTEGER,
+		yspePortSupplyPower
+			Gauge,
+		yspePortPowerPriority
+			INTEGER
+	}
+
+yspePortStackId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Stack ID. When stack is not used, this value is used '1'."
+	::= { yspePortEntry 1 }
+	
+yspePortIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Index of PoE port."
+	::= { yspePortEntry 2 }
+
+yspePortDescr OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..64))
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Description of PoE port."
+	::= { yspePortEntry 3 }
+
+yspePortSupplySetting OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"PoE function(port) Enable/Disable."
+	::= { yspePortEntry 4 }
+
+yspePortDetectClass OBJECT-TYPE
+	SYNTAX	INTEGER {
+		na(1),
+		class0(2),
+		class1(3),
+		class2(4),
+		class3(5),
+		class4(6)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Port power class."
+	::= { yspePortEntry 5 }
+
+yspePortSupplyState OBJECT-TYPE
+	SYNTAX	INTEGER {
+		none(1),
+		supply-class0(2), 
+		supply-class1(3),
+		supply-class2(4),
+		supply-class3(5),
+		supply-class4(6),
+		terminate(7),
+		overcurrent(8),
+		forced-terminate(9),
+		over-supply(10),
+		over-temp(11),
+		fanlock(12),
+		power-failure(13),
+		class-failure(14),
+		over-guardband(15),
+		pd-failure(16),
+		guardband-restrict(17)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Port supply state."
+	::= { yspePortEntry 6 }
+
+yspePortSupplyPower OBJECT-TYPE
+	SYNTAX	Gauge
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Port power consumption (mW)."
+	::= { yspePortEntry 7 }
+
+yspePortPowerPriority OBJECT-TYPE
+	SYNTAX	INTEGER {
+		critical(1),
+		high(2),
+		low(3)
+	}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Port power priority of PoE."
+	::= { yspePortEntry 8 }
+
+-- Traps
+
+yspeSupplyPortTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWPowerEthernet
+	VARIABLES	{ yspePortStackId, yspePortIndex, yspePortDescr, yspePortSupplyState }
+	DESCRIPTION
+		"This trap signifies that PoE power supply start to the PD."
+	::= 1
+
+yspeTerminatePortTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWPowerEthernet
+	VARIABLES	{ yspePortStackId, yspePortIndex, yspePortDescr, yspePortSupplyState }
+	DESCRIPTION
+		"This trap signifies that PoE power supply stop to the PD."
+	::= 2
+
+yspeGuardBandStateTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWPowerEthernet
+	VARIABLES	{ yspeUnitStackId, yspeUnitSupplyPower, yspeUnitGuardBandStatus, yspeUnitGuardBandValue }
+	DESCRIPTION
+		"This trap signifies that guard band status change."
+	::= 3
+
+yspePortErrorTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWPowerEthernet
+	VARIABLES	{ yspePortStackId, yspePortIndex, yspePortDescr, yspePortSupplyState }
+	DESCRIPTION
+		"This trap signifies that PoE port error."
+	::= 4
+
+yspeUnitFailureTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWPowerEthernet
+	VARIABLES	{ yspeUnitStackId, yspeUnitPowerFailure }
+	DESCRIPTION
+		"This trap signifies that PoE unit power failure."
+	::= 5
+
+END

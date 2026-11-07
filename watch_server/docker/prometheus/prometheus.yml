@@ -19,3 +19,71 @@ scrape_configs:
           # - 'recorder.internal:9100'
         labels:
           environment: 'production'
+
+  # SNMP: Yamaha RTX1210 Router
+  - job_name: 'snmp_router'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets:
+          - '10.0.0.1' # rtx1210.internal
+        labels:
+          device: 'rtx1210'
+          role: 'router'
+          environment: 'production'
+    metrics_path: /snmp
+    params:
+      module: [rtx1210]
+      auth: [public_v2]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: snmp-exporter:9116
+
+  # SNMP: L2 Switches (NETGEAR / Yamaha SWX)
+  - job_name: 'snmp_switch'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets:
+          - '10.0.0.3' # xs708t.internal (10G Switch)
+        labels:
+          role: 'l2switch'
+          environment: 'production'
+    metrics_path: /snmp
+    params:
+      module: [l2switch]
+      auth: [public_v2]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: snmp-exporter:9116
+
+  # SNMP: ASUSTOR NAS
+  - job_name: 'snmp_nas'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets:
+          - '10.0.0.5' # nas.internal
+        labels:
+          device: 'asustor-nas'
+          role: 'storage'
+          environment: 'production'
+    metrics_path: /snmp
+    params:
+      module: [asustor]
+      auth: [public_v2]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: snmp-exporter:9116

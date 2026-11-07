@@ -1,0 +1,75 @@
+-- $Id: yamaha-product.mib.txt,v 1.47 2020/08/18 06:43:14 osakabe Exp $
+
+YAMAHA-PRODUCTS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    yamahaProducts
+            FROM YAMAHA-SMI;
+
+rtgeneric	OBJECT IDENTIFIER ::= { yamahaProducts 1 }
+rt100i		OBJECT IDENTIFIER ::= { yamahaProducts 2 }
+rt200i		OBJECT IDENTIFIER ::= { yamahaProducts 3 }
+rt80i		OBJECT IDENTIFIER ::= { yamahaProducts 4 }
+rt102i		OBJECT IDENTIFIER ::= { yamahaProducts 5 }
+rt103i		OBJECT IDENTIFIER ::= { yamahaProducts 6 }
+rt140i		OBJECT IDENTIFIER ::= { yamahaProducts 7 }
+rt140e		OBJECT IDENTIFIER ::= { yamahaProducts 8 }
+rt140p		OBJECT IDENTIFIER ::= { yamahaProducts 9 }
+rt140f		OBJECT IDENTIFIER ::= { yamahaProducts 10 }
+rta50i		OBJECT IDENTIFIER ::= { yamahaProducts 11 }
+rta52i		OBJECT IDENTIFIER ::= { yamahaProducts 12 }
+rt300i		OBJECT IDENTIFIER ::= { yamahaProducts 13 }
+rt52pro		OBJECT IDENTIFIER ::= { yamahaProducts 14 }
+rt105i		OBJECT IDENTIFIER ::= { yamahaProducts 15 }
+rt60w		OBJECT IDENTIFIER ::= { yamahaProducts 16 }
+rt105e		OBJECT IDENTIFIER ::= { yamahaProducts 17 }
+rt105p		OBJECT IDENTIFIER ::= { yamahaProducts 18 }
+rtw65b		OBJECT IDENTIFIER ::= { yamahaProducts 19 }
+rtw65i		OBJECT IDENTIFIER ::= { yamahaProducts 20 }
+rta55i		OBJECT IDENTIFIER ::= { yamahaProducts 21 }
+rt56v		OBJECT IDENTIFIER ::= { yamahaProducts 22 }
+rtx1000		OBJECT IDENTIFIER ::= { yamahaProducts 23 }
+rtx2000		OBJECT IDENTIFIER ::= { yamahaProducts 24 }
+rt57i		OBJECT IDENTIFIER ::= { yamahaProducts 25 }
+rtv700		OBJECT IDENTIFIER ::= { yamahaProducts 26 }
+rtx1500		OBJECT IDENTIFIER ::= { yamahaProducts 27 }
+rtx1100		OBJECT IDENTIFIER ::= { yamahaProducts 28 }
+rt250i		OBJECT IDENTIFIER ::= { yamahaProducts 29 }
+ytd442		OBJECT IDENTIFIER ::= { yamahaProducts 30 }
+rt107e		OBJECT IDENTIFIER ::= { yamahaProducts 31 }
+rtv01		OBJECT IDENTIFIER ::= { yamahaProducts 32 }
+rtx3000		OBJECT IDENTIFIER ::= { yamahaProducts 33 }
+rt58i		OBJECT IDENTIFIER ::= { yamahaProducts 34 }
+srt100		OBJECT IDENTIFIER ::= { yamahaProducts 35 }
+rtx1200		OBJECT IDENTIFIER ::= { yamahaProducts 37 }
+pjp-mc24	OBJECT IDENTIFIER ::= { yamahaProducts 38 }
+rtx800		OBJECT IDENTIFIER ::= { yamahaProducts 39 }
+nvr500		OBJECT IDENTIFIER ::= { yamahaProducts 40 }
+rtx810		OBJECT IDENTIFIER ::= { yamahaProducts 41 }
+fwx120		OBJECT IDENTIFIER ::= { yamahaProducts 42 }
+wlx302		OBJECT IDENTIFIER ::= { yamahaProducts 43 }
+rtx5000		OBJECT IDENTIFIER ::= { yamahaProducts 44 }
+rtx3500		OBJECT IDENTIFIER ::= { yamahaProducts 45 }
+rtx1210		OBJECT IDENTIFIER ::= { yamahaProducts 46 }
+swx2300		OBJECT IDENTIFIER ::= { yamahaProducts 47 }
+wlx202		OBJECT IDENTIFIER ::= { yamahaProducts 48 }
+rtx820		OBJECT IDENTIFIER ::= { yamahaProducts 49 }
+wlx402		OBJECT IDENTIFIER ::= { yamahaProducts 50 }
+nvr700w		OBJECT IDENTIFIER ::= { yamahaProducts 51 }
+nvr510		OBJECT IDENTIFIER ::= { yamahaProducts 52 }
+rtx830		OBJECT IDENTIFIER ::= { yamahaProducts 53 }
+ysl-v810	OBJECT IDENTIFIER ::= { yamahaProducts 54 }
+swx3200		OBJECT IDENTIFIER ::= { yamahaProducts 55 }
+swx3100		OBJECT IDENTIFIER ::= { yamahaProducts 56 }
+swx2310p	OBJECT IDENTIFIER ::= { yamahaProducts 57 }
+swr2311p	OBJECT IDENTIFIER ::= { yamahaProducts 58 }
+wlx313		OBJECT IDENTIFIER ::= { yamahaProducts 59 }
+swp2		OBJECT IDENTIFIER ::= { yamahaProducts 60 }
+vRX		OBJECT IDENTIFIER ::= { yamahaProducts 61 }
+swx2310		OBJECT IDENTIFIER ::= { yamahaProducts 62 }
+swr2310		OBJECT IDENTIFIER ::= { yamahaProducts 63 }
+swx2210		OBJECT IDENTIFIER ::= { yamahaProducts 64 }
+swx2210p	OBJECT IDENTIFIER ::= { yamahaProducts 65 }
+wlx212		OBJECT IDENTIFIER ::= { yamahaProducts 66 }
+
+END

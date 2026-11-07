@@ -1,0 +1,22 @@
+-- $Id: yamaha-sw-bridge.mib.txt,v 1.1 2019/02/01 04:06:35 mizushima Exp $
+
+YAMAHA-SW-BRIDGE DEFINITIONS ::= BEGIN
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	yamahaSWBridge
+		FROM YAMAHA-SW;
+
+-- Information
+
+ysbridgeEnableTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If this value is set to 1, trap notification such as newRoot is enabled.
+		If this value is set to 2, trap notification is disabled."
+	::= { yamahaSWBridge 1 }
+
+END

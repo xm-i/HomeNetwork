@@ -1,0 +1,257 @@
+-- $Id: yamaha-rt-firmware.mib.txt,v 1.9 2013/12/11 07:09:04 a_onoda Exp $
+
+YAMAHA-RT-FIRMWARE DEFINITIONS ::= BEGIN
+
+IMPORTS
+	mgmt, NetworkAddress, IpAddress, Counter, Gauge, TimeTicks
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	DisplayString
+		FROM RFC1213-MIB
+	TRAP-TYPE
+		FROM RFC-1215
+	yamahaRTFirmware
+		FROM YAMAHA-RT;
+
+-- firmware information
+
+yrfFirmwareFile OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A textual string containing a name of a firmware file
+		which is now executing."
+	::= { yamahaRTFirmware 1 }
+
+yrfConfigFile OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A textual string containing a name of a configuration
+		file which is now executing."
+	::= { yamahaRTFirmware 2 }
+
+yrfRevision OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A textual string containing a revision information of
+		an firmware.  This variable is equal to
+		mib-2.system.sysDescr."
+	::= { yamahaRTFirmware 3 }
+
+yrfUpTime OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The time (in hundredths of a second) since the
+		network management portion of the system was last
+		re-initialized.  This variable is equal to
+		mib-2.system.sysUpTime."
+	::= { yamahaRTFirmware 4 }
+
+yrfLoginSerial OBJECT-TYPE
+	SYNTAX	INTEGER { notLogin(1), login(2), administrator(3) }
+	ACCESS	read-only
+	STATUS	obsolete
+	DESCRIPTION
+		"Indicates that anyone is now login or not from the
+		serial console."
+	::= { yamahaRTFirmware 5 }
+
+yrfLoginTelnet OBJECT-TYPE
+	SYNTAX	INTEGER { notLogin(1), login(2), administrator(3) }
+	ACCESS	read-only
+	STATUS	obsolete
+	DESCRIPTION
+		"Indicates that anyone is now login or not from
+		telnet."
+	::= { yamahaRTFirmware 6 }
+
+yrfLoginTelnetFrom OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	obsolete
+	DESCRIPTION
+		"An IP address which access to the system by telnet."
+	::= { yamahaRTFirmware 7 }
+
+yrfLoginRemote OBJECT-TYPE
+	SYNTAX	INTEGER { notLogin(1), login(2), administrator(3) }
+	ACCESS	read-only
+	STATUS	obsolete
+	DESCRIPTION
+		"Indicates that anyone is now login or not from
+		remote access via ISDN or else."
+	::= { yamahaRTFirmware 8 }
+
+yrfEnableLoginTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicates whether an yrfLoginTrap send when login
+		status is changed."
+	::= { yamahaRTFirmware 9 }
+
+yrfConfig OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrfConfigEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A system's configuration lines."
+	::= { yamahaRTFirmware 10 }
+
+yrfRestart OBJECT-TYPE
+	SYNTAX	INTEGER { nothing(1), restart(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"A system will restart when the value 'restart' is
+		written to this variable"
+	::= { yamahaRTFirmware 11 }
+
+yrfLoginSSH OBJECT-TYPE
+        SYNTAX  INTEGER { notLogin(1), login(2), administrator(3) }
+        ACCESS  read-only
+        STATUS  obsolete
+        DESCRIPTION
+                "Indicates that anyone is now login or not from ssh."
+        ::= { yamahaRTFirmware 12 }
+
+yrfLoginSSHFrom OBJECT-TYPE
+        SYNTAX  IpAddress
+        ACCESS  read-only
+        STATUS  obsolete
+        DESCRIPTION
+                "An IP address which access to the system by ssh."
+        ::= { yamahaRTFirmware 13 }
+
+yrfLoginTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrfLoginEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Login status table"
+	::= { yamahaRTFirmware 14 }
+
+
+-- configuration
+
+yrfConfigEntry OBJECT-TYPE
+	SYNTAX	YrfConfigEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A line of a system configuration."
+	INDEX	{ yrfConfigIndex }
+	::= { yrfConfig 1 }
+
+YrfConfigEntry ::=
+	SEQUENCE {
+		yrfConfigIndex
+			INTEGER,
+		yrfConfig1line
+			DisplayString
+	}
+
+yrfConfigIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each line."
+	::= { yrfConfigEntry 1 }
+
+yrfConfig1line OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..1023))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A line of a system configuration."
+	::= { yrfConfigEntry 2 }
+
+
+-- Login status
+
+yrfLoginEntry OBJECT-TYPE
+	SYNTAX	YrfLoginEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Login status from STATUS"
+	INDEX	{ yrfLoginIndex }
+	::= { yrfLoginTable 1 }
+
+YrfLoginEntry ::=
+	SEQUENCE {
+		yrfLoginIndex
+			INTEGER,
+		yrfLoginProtocol
+			INTEGER,
+		yrfLoginStatus
+			INTEGER,
+		yrfLoginUser
+			DisplayString,
+		yrfLoginFromIp
+			IpAddress
+	}
+
+yrfLoginIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each login."
+	::= { yrfLoginEntry 1 }
+
+yrfLoginProtocol OBJECT-TYPE
+	SYNTAX	INTEGER { serial(1), remote(2), telnet(3), ssh(4) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicates that anyone is now login or not from
+		status."
+	::= { yrfLoginEntry 2 }
+
+yrfLoginStatus OBJECT-TYPE
+	SYNTAX	INTEGER { notLogin(1), login(2), administrator(3) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicates that anyone is now login or not from
+		status."
+	::= { yrfLoginEntry 3 }
+
+yrfLoginUser OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..32))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"login user name."
+	::= { yrfLoginEntry 4 }
+
+yrfLoginFromIp OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An IP address which access to the system by TELNET/SSH."
+	::= { yrfLoginEntry 5 }
+
+-- Traps
+
+yrfLoginTrap TRAP-TYPE
+	ENTERPRISE	yamahaRTFirmware
+	VARIABLES	{ yrfLoginIndex, yrfLoginProtocol,
+			  yrfLoginStatus, yrfLoginFromIp }
+	DESCRIPTION
+		"This trap indicates that the login status is changed."
+	::= 1
+
+END

@@ -1,0 +1,378 @@
+-- $Id: yamaha-sw-l2ms.mib.txt,v 1.4 2019/02/01 04:06:35 mizushima Exp $
+
+YAMAHA-SW-L2MS DEFINITIONS ::= BEGIN
+
+IMPORTS
+	mgmt, NetworkAddress, IpAddress, Counter, Gauge, TimeTicks
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	DisplayString, PhysAddress
+		FROM RFC1213-MIB
+	TRAP-TYPE
+		FROM RFC-1215
+	yamahaSWL2ms
+		FROM YAMAHA-SW;
+
+-- Information of controlled switch
+
+ysl2msNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of controlled switch on this system."
+	::= { yamahaSWL2ms 1 }
+
+ysl2msEnableTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If this value is set is 1, the trap notification 
+		such as ysl2msFindSlave is enabled.
+        If this value is set is 2, the trap notification is disabled."
+	::= { yamahaSWL2ms 2 }
+	
+ysl2msTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF Ysl2msEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of controlled switch entries."
+	::= { yamahaSWL2ms 3 }
+
+ysl2msLoopDetect 
+	OBJECT	IDENTIFIER
+	::= { yamahaSWL2ms 4 }
+
+ysl2msPoE 
+	OBJECT	IDENTIFIER
+	::= { yamahaSWL2ms 5 }
+
+ysl2msEntry OBJECT-TYPE
+	SYNTAX	Ysl2msEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A controlled switch entry."
+	INDEX	{ ysl2msIndex }
+	::= { ysl2msTable 1 }
+
+Ysl2msEntry ::=
+	SEQUENCE {
+		ysl2msIndex
+			DisplayString,
+		ysl2msProduct
+			INTEGER,
+		ysl2msName
+			DisplayString,
+		ysl2msFirmwareRevision
+			DisplayString,
+		ysl2msPhysAddress
+			DisplayString,
+		ysl2msPortNumber
+			INTEGER,
+		ysl2msFanStatus
+			INTEGER,
+		ysl2msSupply
+			INTEGER,
+		ysl2msTemp
+			INTEGER,
+		ysl2msPowerFailure
+			INTEGER,
+		ysl2msRoute
+			DisplayString
+	}
+
+ysl2msIndex OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..6))
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each controlled switch."
+	::= { ysl2msEntry 1 }
+
+ysl2msProduct OBJECT-TYPE
+	SYNTAX	INTEGER { generic(1), swx2200-8g(2), swx2200-24g(3), swx2200-8poe(4) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The product number."
+	::= { ysl2msEntry 2 }
+
+ysl2msName OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The controlled switch's 'system-name'."
+	::= { ysl2msEntry 3 }
+
+ysl2msFirmwareRevision OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A textual string containing a revision information of
+		an firmware."
+	::= { ysl2msEntry 4 }
+
+ysl2msPhysAddress OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..6))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The controlled switch's MAC Address"
+	::= { ysl2msEntry 5 }
+
+ysl2msPortNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of controlled switch's ports."
+	::= { ysl2msEntry 6 }
+
+ysl2msFanStatus OBJECT-TYPE
+	SYNTAX	INTEGER { normal(1), lock(2), none(3) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The status of controlled switch's fan."
+	::= { ysl2msEntry 7 }
+
+ysl2msSupply OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The supplied  value of controlled switch's power unit."
+	::= { ysl2msEntry 8 }
+
+ysl2msTemp OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The controlled switch's temperature."
+	::= { ysl2msEntry 9 }
+
+ysl2msPowerFailure OBJECT-TYPE
+	SYNTAX	INTEGER { normal(1), failure(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The status of controlled switch's power unit."
+	::= { ysl2msEntry 10 }
+
+ysl2msRoute OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..64))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The routing information of a controlled switch."
+	::= { ysl2msEntry 11 }
+	
+ysl2msLoopDetectPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF Ysl2msLoopDetectPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of controlled switch's loop-detect port entries."
+	::= { ysl2msLoopDetect 1 }
+
+ysl2msLoopDetectPortEntry OBJECT-TYPE
+	SYNTAX	Ysl2msLoopDetectPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A controlled switch's loop-detect port entries."
+	INDEX	{ ysl2msIndex, ysl2msLoopDetectPortIndex }
+	::= { ysl2msLoopDetectPortTable 1 }
+
+Ysl2msLoopDetectPortEntry ::=
+	SEQUENCE {
+		ysl2msLoopDetectPortIndex
+			INTEGER,
+		ysl2msLoopDetectPortUse
+			INTEGER,
+		ysl2msLoopDetectPortStatus
+			INTEGER
+	}
+
+ysl2msLoopDetectPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each controlled switch's port."
+	::= { ysl2msLoopDetectPortEntry 1 }
+
+ysl2msLoopDetectPortUse OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The desired state of each controlled switch's loop-detect port."
+	::= { ysl2msLoopDetectPortEntry 2 }
+
+ysl2msLoopDetectPortStatus OBJECT-TYPE
+	SYNTAX	INTEGER { normal(1), loopdetect(2), linkdown(3) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current operational state of each controlled switch's loop-detect port."
+	::= { ysl2msLoopDetectPortEntry 3 }
+
+ysl2msPoEPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF Ysl2msPoEPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of controlled switch's PoE port entries."
+	::= { ysl2msPoE 1 }
+
+ysl2msPoEPortEntry OBJECT-TYPE
+	SYNTAX	Ysl2msPoEPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A controlled switch's PoE port entries."
+	INDEX	{ ysl2msIndex, ysl2msPoEPortIndex }
+	::= { ysl2msPoEPortTable 1 }
+
+Ysl2msPoEPortEntry ::=
+	SEQUENCE {
+		ysl2msPoEPortIndex
+			INTEGER,
+		ysl2msPoEPortSetting
+			INTEGER,
+		ysl2msPoEPortDetectClass
+			INTEGER,
+		ysl2msPoEPortState
+			INTEGER,
+		ysl2msPoEPortSupply
+			INTEGER
+	}
+
+ysl2msPoEPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each controlled switch's port."
+	::= { ysl2msPoEPortEntry 1 }
+
+ysl2msPoEPortSetting OBJECT-TYPE
+	SYNTAX	INTEGER { class3(3), class4(4) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The set of each controlled switch's PoE port."
+	::= { ysl2msPoEPortEntry 2 }
+
+ysl2msPoEPortDetectClass OBJECT-TYPE
+	SYNTAX	INTEGER { class0(1), class1(2), class2(3), class3(4), class4(5) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The recogmized class of each controlled switch's PoE port."
+	::= { ysl2msPoEPortEntry 3 }
+
+ysl2msPoEPortState OBJECT-TYPE
+	SYNTAX	INTEGER {
+		supply-class0(1),
+		supply-class1(2),
+		supply-class2(3),
+		supply-class3(4),
+		supply-class4(5),
+		terminate(6),
+		overcurrent(7),
+		forced-terminate(8),
+		over-supply(9),
+		over-temp(10),
+		fanlock(11),
+		power-failure(12),
+		class-failure(13),
+		over-guardband(14)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current state of each controlled switch's PoE port."
+	::= { ysl2msPoEPortEntry 4 }
+
+ysl2msPoEPortSupply OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The power supplied value of each controlled switch's PoE port."
+	::= { ysl2msPoEPortEntry 5 }
+
+-- Traps
+
+ysl2msFindSlave TRAP-TYPE
+	ENTERPRISE	yamahaSWL2ms
+	VARIABLES	{ ysl2msNumber, ysl2msProduct, ysl2msPhysAddress, ysl2msRoute }
+	DESCRIPTION
+		"This trap signifies that a controlled switch is detected."
+	::= 1
+
+ysl2msDetectDown TRAP-TYPE
+	ENTERPRISE	yamahaSWL2ms
+	VARIABLES	{ ysl2msNumber, ysl2msProduct, ysl2msPhysAddress, ysl2msRoute }
+	DESCRIPTION
+		"This trap signifies that a controlled switch is lost."
+	::= 2
+
+ysl2msFanLock TRAP-TYPE
+	ENTERPRISE	yamahaSWL2ms
+	VARIABLES	{ ysl2msFanStatus, ysl2msRoute }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's fan lock."
+	::= 3
+
+ysl2msOverSupply TRAP-TYPE
+	ENTERPRISE	yamahaSWL2ms
+	VARIABLES	{ ysl2msSupply, ysl2msRoute }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's PoE over supply."
+	::= 4
+
+ysl2msOverTemp TRAP-TYPE
+	ENTERPRISE	yamahaSWL2ms
+	VARIABLES	{ ysl2msTemp, ysl2msRoute }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's over temperature."
+	::= 5
+
+ysl2msPowerUnitFailure TRAP-TYPE
+	ENTERPRISE	yamahaSWL2ms
+	VARIABLES	{ ysl2msPowerFailure, ysl2msRoute }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's Power unit failure."
+	::= 6
+
+ysl2msLoopDetectPort TRAP-TYPE
+	ENTERPRISE	ysl2msLoopDetect
+	VARIABLES	{ ysl2msLoopDetectPortStatus, ysl2msRoute }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's port is loop-detect."
+	::= 1
+
+ysl2msPoESupplyPort TRAP-TYPE
+	ENTERPRISE	ysl2msPoE
+	VARIABLES	{ ysl2msPoEPortState, ysl2msRoute }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's port is PoE supply."
+	::= 1
+
+ysl2msPoETerminatePort TRAP-TYPE
+	ENTERPRISE	ysl2msPoE
+	VARIABLES	{ ysl2msPoEPortState, ysl2msRoute }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's port is PoE terminate."
+	::= 2
+END

@@ -1,0 +1,164 @@
+-- $Id: yamaha-sw-loop-detect.mib.txt,v 1.2 2020/01/29 09:13:42 onoyama Exp $
+
+YAMAHA-SW-LOOP-DETECT DEFINITIONS ::= BEGIN
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	TRAP-TYPE
+		FROM RFC-1215
+	yamahaSWLoopDetect
+		FROM YAMAHA-SW;
+
+-- Information
+
+ysldEnableTrap OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Whether or not send SNMP traps about loop-detect."
+	::= { yamahaSWLoopDetect 1 }
+
+ysldSystemAdmin OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Enable,Disable loop detection (system)."
+	::= { yamahaSWLoopDetect 2 }
+
+ysldSystemPortBlocking OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Setting whether to block port when loop occurs."
+	::= { yamahaSWLoopDetect 3 }
+
+ysldSystemAutoRecover OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Enable,Disable automatic recovery."
+	::= { yamahaSWLoopDetect 4 }
+
+ysldSystemShutdownRecoveryInterval OBJECT-TYPE
+	SYNTAX	INTEGER (10..1000000)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Time until Shutdown state automatic recovery (seconds)."
+	::= { yamahaSWLoopDetect 5 }
+
+ysldSystemBlockingRecoveryInterval OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Time until automatic recovery of Blocking status (seconds)."
+	::= { yamahaSWLoopDetect 6 }
+
+ysldSystemStatusReset OBJECT-TYPE
+	SYNTAX	INTEGER { nothing(1), reset(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Loop detection state reset.
+		Loop detection state is reset when set to reset(2).
+		The value of MIB returns to nothing(1) immediately after SET of reset(2)."
+	::= { yamahaSWLoopDetect 7 }
+
+ysldPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YsldPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"List of loop-detect port entries."
+	::= { yamahaSWLoopDetect 8 }
+
+ysldPortEntry OBJECT-TYPE
+	SYNTAX	YsldPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Loop-detect port entry."
+	INDEX	{ ysldPortStackId, ysldPortIndex }
+	::= { ysldPortTable 1 }
+
+YsldPortEntry ::=
+	SEQUENCE {
+		ysldPortStackId
+			INTEGER,
+		ysldPortIndex
+			INTEGER,
+		ysldPortAdmin
+			INTEGER,
+		ysldPortStatus
+			INTEGER
+	}
+
+ysldPortStackId OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Stack ID. When stack is not used, this value is used '1'."
+	::= { ysldPortEntry 1 }
+	
+ysldPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Index of physical port. Use port number."
+	::= { ysldPortEntry 2 }
+
+ysldPortAdmin OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Enable,Disable loop detection (interface)."
+	::= { ysldPortEntry 3 }
+
+ysldPortStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		disabled(1),
+		normal(2),
+		detected(3),
+		blocked(4),
+		shutdown(5)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Loop detection status of physical port."
+	::= { ysldPortEntry 4 }
+
+-- Traps
+
+ysldPortDetectLoopTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWLoopDetect
+	VARIABLES	{
+		ysldPortStackId,
+		ysldPortIndex,
+		ysldPortStatus
+	}
+	DESCRIPTION
+		"This trap signifies that loop detected."
+	::= 1
+
+ysldPortResolveLoopTrap TRAP-TYPE
+	ENTERPRISE	yamahaSWLoopDetect
+	VARIABLES	{
+		ysldPortStackId,
+		ysldPortIndex,
+		ysldPortStatus
+	}
+	DESCRIPTION
+		"This trap signifies that loop resolved."
+	::= 2
+
+END

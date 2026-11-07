@@ -1,0 +1,358 @@
+-- $Id: yamaha-rt-switch.mib.txt,v 1.7 2018/04/12 01:57:29 h-toda Exp $
+
+YAMAHA-RT-SWITCH DEFINITIONS ::= BEGIN
+
+IMPORTS
+	mgmt, NetworkAddress, IpAddress, Counter, Gauge, TimeTicks
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	DisplayString, PhysAddress
+		FROM RFC1213-MIB
+	TRAP-TYPE
+		FROM RFC-1215
+	yamahaRTSwitch
+		FROM YAMAHA-RT;
+
+-- Information of controlled switch
+
+yrSwNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of controlled switch on this system."
+	::= { yamahaRTSwitch 1 }
+
+yrSwTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrSwEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of controlled switch entries."
+	::= { yamahaRTSwitch 2 }
+
+yrSwLoopDetect 
+	OBJECT	IDENTIFIER
+	::= { yamahaRTSwitch 3 }
+
+yrSwPoE 
+	OBJECT	IDENTIFIER
+	::= { yamahaRTSwitch 4 }
+
+yrSwEntry OBJECT-TYPE
+	SYNTAX	YrSwEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A controlled switch entry."
+	INDEX	{ yrSwIndex }
+	::= { yrSwTable 1 }
+
+YrSwEntry ::=
+	SEQUENCE {
+		yrSwIndex
+			INTEGER,
+		yrSwProduct
+			INTEGER,
+		yrSwName
+			DisplayString,
+		yrSwFirmwareRevision
+			DisplayString,
+		yrSwPhysAddress
+			DisplayString,
+		yrSwPortNumber
+			INTEGER,
+		yrSwFanStatus
+			INTEGER,
+		yrSwSupply
+			INTEGER,
+		yrSwTemp
+			INTEGER,
+		yrSwPowerFailure
+			INTEGER
+	}
+
+yrSwIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each controlled switch."
+	::= { yrSwEntry 1 }
+
+yrSwProduct OBJECT-TYPE
+	SYNTAX	INTEGER { swxgeneric(1), swx2200-8g(2), swx2200-24g(3), swx2200-8poe(4), swx2100-8g(5), swx2100-16g(6), swx2100-24g(7), swx2100-5poe(8), swx2100-10poe(9), swr2100p-5g(10), swr2100p-10g(11) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The product number."
+	::= { yrSwEntry 2 }
+
+yrSwName OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The controlled switch's 'system-name'."
+	::= { yrSwEntry 3 }
+
+yrSwFirmwareRevision OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A textual string containing a revision information of
+		an firmware."
+	::= { yrSwEntry 4 }
+
+yrSwPhysAddress OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The controlled switch's MAC Address"
+	::= { yrSwEntry 5 }
+
+yrSwPortNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of controlled switch's ports."
+	::= { yrSwEntry 6 }
+
+yrSwFanStatus OBJECT-TYPE
+	SYNTAX	INTEGER { normal(1), lock(2), none(3) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The status of controlled switch's fan."
+	::= { yrSwEntry 7 }
+
+yrSwSupply OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The supplied  value of controlled switch's power unit."
+	::= { yrSwEntry 8 }
+
+yrSwTemp OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The controlled switch's temperature."
+	::= { yrSwEntry 9 }
+
+yrSwPowerFailure OBJECT-TYPE
+	SYNTAX	INTEGER { normal(1), failure(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The status of controlled switch's power unit."
+	::= { yrSwEntry 10 }
+
+yrSwLoopDetectPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrSwLoopDetectPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of controlled switch's loop-detect port entries."
+	::= { yrSwLoopDetect 1 }
+
+yrSwLoopDetectPortEntry OBJECT-TYPE
+	SYNTAX	YrSwLoopDetectPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A controlled switch's loop-detect port entries."
+	INDEX	{ yrSwIndex, yrSwLoopDetectPortIndex }
+	::= { yrSwLoopDetectPortTable 1 }
+
+YrSwLoopDetectPortEntry ::=
+	SEQUENCE {
+		yrSwLoopDetectPortIndex
+			INTEGER,
+		yrSwLoopDetectPortUse
+			INTEGER,
+		yrSwLoopDetectPortStatus
+			INTEGER
+	}
+
+yrSwLoopDetectPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each controlled switch's port."
+	::= { yrSwLoopDetectPortEntry 1 }
+
+yrSwLoopDetectPortUse OBJECT-TYPE
+	SYNTAX	INTEGER { enabled(1), disabled(2) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The desired state of each controlled switch's loop-detect port."
+	::= { yrSwLoopDetectPortEntry 2 }
+
+yrSwLoopDetectPortStatus OBJECT-TYPE
+	SYNTAX	INTEGER { normal(1), loopdetect(2), linkdown(3) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current operational state of each controlled switch's loop-detect port."
+	::= { yrSwLoopDetectPortEntry 3 }
+
+yrSwPoEPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF YrSwPoEPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of controlled switch's PoE port entries."
+	::= { yrSwPoE 1 }
+
+yrSwPoEPortEntry OBJECT-TYPE
+	SYNTAX	YrSwPoEPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A controlled switch's PoE port entries."
+	INDEX	{ yrSwIndex, yrSwPoEPortIndex }
+	::= { yrSwPoEPortTable 1 }
+
+YrSwPoEPortEntry ::=
+	SEQUENCE {
+		yrSwPoEPortIndex
+			INTEGER,
+		yrSwPoEPortSetting
+			INTEGER,
+		yrSwPoEPortDetectClass
+			INTEGER,
+		yrSwPoEPortState
+			INTEGER,
+		yrSwPoEPortSupply
+			INTEGER
+	}
+
+yrSwPoEPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..2147483647)
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each controlled switch's port."
+	::= { yrSwPoEPortEntry 1 }
+
+yrSwPoEPortSetting OBJECT-TYPE
+	SYNTAX	INTEGER { class3(3), class4(4) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The set of each controlled switch's PoE port."
+	::= { yrSwPoEPortEntry 2 }
+
+yrSwPoEPortDetectClass OBJECT-TYPE
+	SYNTAX	INTEGER { class0(1), class1(2), class2(3), class3(4), class4(5) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The recogmized class of each controlled switch's PoE port."
+	::= { yrSwPoEPortEntry 3 }
+
+yrSwPoEPortState OBJECT-TYPE
+	SYNTAX	INTEGER {
+		supply-class0(1),
+		supply-class1(2),
+		supply-class2(3),
+		supply-class3(4),
+		supply-class4(5),
+		terminate(6),
+		overcurrent(7),
+		forced-terminate(8),
+		over-supply(9),
+		over-temp(10),
+		fanlock(11),
+		power-failure(12),
+		class-failure(13),
+		over-guardband(14)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current state of each controlled switch's PoE port."
+	::= { yrSwPoEPortEntry 4 }
+
+yrSwPoEPortSupply OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The power supplied value of each controlled switch's PoE port."
+	::= { yrSwPoEPortEntry 5 }
+
+-- Traps
+
+yrSwFindSwitch TRAP-TYPE
+	ENTERPRISE	yamahaRTSwitch
+	VARIABLES	{ yrSwNumber, yrSwProduct, yrSwPhysAddress }
+	DESCRIPTION
+		"This trap signifies that a controlled switch is detected."
+	::= 1
+
+yrSwDetectDown TRAP-TYPE
+	ENTERPRISE	yamahaRTSwitch
+	VARIABLES	{ yrSwNumber, yrSwProduct, yrSwPhysAddress }
+	DESCRIPTION
+		"This trap signifies that a controlled switch is lost."
+	::= 2
+
+yrSwFanLock TRAP-TYPE
+	ENTERPRISE	yamahaRTSwitch
+	VARIABLES	{ yrSwFanStatus }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's fan lock."
+	::= 3
+
+yrSwOverSupply TRAP-TYPE
+	ENTERPRISE	yamahaRTSwitch
+	VARIABLES	{ yrSwSupply }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's PoE over supply."
+	::= 4
+
+yrSwOverTemp TRAP-TYPE
+	ENTERPRISE	yamahaRTSwitch
+	VARIABLES	{ yrSwTemp }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's over temperature."
+	::= 5
+
+yrSwPowerUnitFailure TRAP-TYPE
+	ENTERPRISE	yamahaRTSwitch
+	VARIABLES	{ yrSwPowerFailure }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's Power unit failure."
+	::= 6
+
+yrSwLoopDetectPort TRAP-TYPE
+	ENTERPRISE	yrSwLoopDetect
+	VARIABLES	{ yrSwLoopDetectPortStatus }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's port is loop-detect."
+	::= 1
+
+yrSwPoESupplyPort TRAP-TYPE
+	ENTERPRISE	yrSwPoE
+	VARIABLES	{ yrSwPoEPortState }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's port is PoE supply."
+	::= 1
+
+yrSwPoETerminatePort TRAP-TYPE
+	ENTERPRISE	yrSwPoE
+	VARIABLES	{ yrSwPoEPortState }
+	DESCRIPTION
+		"This trap signifies that a controlled switch's port is PoE terminate."
+	::= 2
+END
