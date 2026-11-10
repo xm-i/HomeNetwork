@@ -6,7 +6,7 @@ IMPORTS
 	enterprises, MODULE-IDENTITY, OBJECT-TYPE, Integer32
 				FROM SNMPv2-SMI;
 
-asustor	 OBJECT IDENTIFIER 
+asustor	 OBJECT IDENTIFIER
 	::= { enterprises 44738 }
 
 asustorDisk MODULE-IDENTITY
@@ -17,39 +17,39 @@ asustorDisk MODULE-IDENTITY
     DESCRIPTION
         "Characteristics of the disk information"
     ::= { asustor 4 }
-	
-diskTable OBJECT-TYPE
-    SYNTAX	   SEQUENCE OF DiskEntry
-    MAX-ACCESS	  not-accessible
-    STATUS	   current
-    DESCRIPTION
-    "Asustor disk table"
-    ::= { asustorDisk 1 }
 
-diskEntry	  OBJECT-TYPE
-    SYNTAX	   DiskEntry
-    MAX-ACCESS	  not-accessible
-    STATUS	   current
-    DESCRIPTION
-    "For all disk entry"
-    INDEX   { diskIndex }
-    ::= { diskTable 1 }
-
-DiskEntry ::= SEQUENCE {
+SeqStructDisk ::= SEQUENCE {
     diskIndex		Integer32,
     diskID			OCTET STRING,
 	diskModel		OCTET STRING,
 	diskType		OCTET STRING,
 	diskStatus		OCTET STRING,
+	diskSmartStatus	OCTET STRING,
 	diskTemperature	Integer32,
-	diskSize    Integer32,
-	diskSmartInfo	OCTET STRING
+	diskSize		Integer32
 }
 
+diskTable OBJECT-TYPE
+    SYNTAX	   	SEQUENCE OF SeqStructDisk
+    MAX-ACCESS	not-accessible
+    STATUS	   	current
+    DESCRIPTION
+    "Asustor disk table"
+    ::= { asustorDisk 1 }
+
+diskEntry OBJECT-TYPE
+    SYNTAX	   	SeqStructDisk
+    MAX-ACCESS	not-accessible
+    STATUS	   	current
+    DESCRIPTION
+    "For all disk entry"
+    INDEX   { diskIndex }
+    ::= { diskTable 1 }
+
 diskIndex OBJECT-TYPE
-    SYNTAX	   Integer32(0..2147483647)
-    MAX-ACCESS	  not-accessible
-    STATUS	   current
+    SYNTAX	   	Integer32
+    MAX-ACCESS	not-accessible
+    STATUS	   	current
     DESCRIPTION
     "The index of disk table"
     ::= { diskEntry 1 }
@@ -79,45 +79,37 @@ diskType OBJECT-TYPE
     ::= { diskEntry 4 }
 
 diskStatus OBJECT-TYPE
-    SYNTAX	  OCTET STRING
+    SYNTAX	  	OCTET STRING
     MAX-ACCESS  read-only
-    STATUS	  current
+    STATUS		current
     DESCRIPTION
-    "Asustor disk smart status 
-	 Each meanings of status represented describe below.
-
-	 Healthy: The hard disk smart status is healthy.
-	 Normal: The hard disk smart status is normal.
-	 Risky:	The hard disk smart status is risky.	
-	 Dangerous: The hard disk smart status is dangerous.
-	 Bad: The hard disk smart status is bad.
-	"
+    "Asustor disk status"
     ::= { diskEntry 5 }
+	
+diskSmartStatus OBJECT-TYPE
+    SYNTAX	  	OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS		current
+    DESCRIPTION
+    "Asustor disk smart info"
+    ::= { diskEntry 6 }	
 
 diskTemperature OBJECT-TYPE
-    SYNTAX	   Integer32
-    MAX-ACCESS	  read-only
-    STATUS	   current
+    SYNTAX	   	Integer32
+    MAX-ACCESS	read-only
+    STATUS	   	current
     DESCRIPTION
     "The temperature of each disk uses Celsius degree"
-    ::= { diskEntry 6 }	
-	
+    ::= { diskEntry 7 }	
+
 diskSize OBJECT-TYPE
-    SYNTAX	   Integer32
-    MAX-ACCESS	  read-only
-    STATUS	   current
+    SYNTAX	   	Integer32
+    MAX-ACCESS	read-only
+    STATUS	   	current
     DESCRIPTION
     "The disk size of disk uses gigabyte(GB)"
-    ::= { diskEntry 7 }		
-	
-diskSmartInfo OBJECT-TYPE
-    SYNTAX	   OCTET STRING
-    MAX-ACCESS	  read-only
-    STATUS	   current
-    DESCRIPTION
-    ""
-    ::= { diskEntry 8 }			
-	
+    ::= { diskEntry 8 }
+
 asustorVolume MODULE-IDENTITY
     ORGANIZATION "www.asustor.com"
     CONTACT-INFO
@@ -126,33 +118,33 @@ asustorVolume MODULE-IDENTITY
     DESCRIPTION
         "Characteristics of the volume information"
     ::= { asustor 5 }
+	
+SeqStructVolume ::= SEQUENCE {
+	volumeIndex			Integer32,
+    volumeName			OCTET STRING,
+	volumeLevel			OCTET STRING,
+	volumeStatus		OCTET STRING,
+	volumeFileSystem	OCTET STRING,
+	volumeTotalSize		Integer32,
+	volumeFreeSize  	Integer32
+}
     
 volumeTable OBJECT-TYPE
-    SYNTAX	   SEQUENCE OF VolumeEntry
-    MAX-ACCESS	  not-accessible
-    STATUS	   current
+    SYNTAX		SEQUENCE OF SeqStructVolume
+    MAX-ACCESS	not-accessible
+    STATUS		current
     DESCRIPTION
     "The volume table"
     ::= { asustorVolume 1 }
 
 volumeEntry	  OBJECT-TYPE
-    SYNTAX	   VolumeEntry
-    MAX-ACCESS	  not-accessible
-    STATUS	   current
+    SYNTAX		SeqStructVolume
+    MAX-ACCESS	not-accessible
+    STATUS		current
     DESCRIPTION
     "For all volume entry"
     INDEX   { volumeIndex }
     ::= { volumeTable 1 }
-
-VolumeEntry ::= SEQUENCE {
-    volumeIndex		Integer32,
-    volumeName		OCTET STRING,
-	volumeLevel		OCTET STRING,
-	volumeStatus		OCTET STRING,
-	volumeFileSystem		OCTET STRING,
-	volumeTotalSize  Integer32,
-	volumeFreeSize  Integer32
-}
 
 volumeIndex OBJECT-TYPE
     SYNTAX	   Integer32(0..2147483647)
@@ -170,94 +162,68 @@ volumeName OBJECT-TYPE
     "The volume name"
     ::= { volumeEntry 2 }	
 	
-volumeLevel	 OBJECT-TYPE
-    SYNTAX	  OCTET STRING
+volumeLevel OBJECT-TYPE
+    SYNTAX	  	OCTET STRING
     MAX-ACCESS  read-only
-    STATUS	  current
+    STATUS	  	current
     DESCRIPTION
     "The volume level
-	 Each meanings of volume level represented describe below.
-	 
-	 signal: The hard disk raid level is single 
-	 jbod: The hard disk raid level is linear
-	 raid0: The hard disk raid level is raid0
-	 raid1: The hard disk raid level is raid1
-	 raid10: The hard disk raid level is raid10
-	 raid5: The hard disk raid level is raid5
-	 raid6: The hard disk raid level is raid6	 
-	"
+	 Each meanings of volume level represented describe below."
     ::= { volumeEntry 3 }	
 	
 volumeStatus OBJECT-TYPE
-    SYNTAX	  OCTET STRING
+    SYNTAX	  	OCTET STRING
     MAX-ACCESS  read-only
-    STATUS	  current
+    STATUS	  	current
     DESCRIPTION
     "The volume status
-	 Each meanings of volume level represented describe below.
-
-	 healthy: The state of this RAID is healthy.
-	 clean: The state of this RAID is clean.
-	 active: The state of this RAID is active.
-	 resyncing: The state of this RAID is resyncing.
-	 recovering: The state of this RAID is recovering
-	 reshaping: The state of this RAID is reshaping.
-	 appending: The state of this RAID is appending.
-	 migrating: The state of this RAID is migrating.
-	 fsexpanding: The state of this RAID is expanding FS.
-	 fsiniting: The state of this RAID is initializing FS.
-	 degraded: The state of this RAID is healthy.
-	 failed: The state of this RAID is failed.
-	 inactive: The state of this RAID is inactive.
-	"
+	 Each meanings of volume level represented describe below."
     ::= { volumeEntry 4 }
 
-volumeFileSystem	 OBJECT-TYPE
-    SYNTAX	  OCTET STRING
+volumeFileSystem OBJECT-TYPE
+    SYNTAX	  	OCTET STRING
     MAX-ACCESS  read-only
-    STATUS	  current
+    STATUS	  	current
     DESCRIPTION
     "The volume file system"
     ::= { volumeEntry 5 }
 
-volumeTotalSize	 OBJECT-TYPE
-    SYNTAX	  Integer32
-    MAX-ACCESS  read-only
-    STATUS	  current
+volumeTotalSize OBJECT-TYPE
+    SYNTAX	  	Integer32
+    MAX-ACCESS	read-only
+    STATUS	  	current
     DESCRIPTION
     "The size of volume uses gigabyte(GB)"
     ::= { volumeEntry 6 }
 
-volumeFreeSize  OBJECT-TYPE
-    SYNTAX	  Integer32
+volumeFreeSize OBJECT-TYPE
+    SYNTAX	  	Integer32
     MAX-ACCESS  read-only
-    STATUS	  current
+    STATUS	  	current
     DESCRIPTION
     "The remain size of volume uses gigabyte(GB)"
     ::= { volumeEntry 7 }	
-	
-	
-	
-diskConformance OBJECT IDENTIFIER ::= { asustorDisk 2 }
-diskCompliances OBJECT IDENTIFIER ::= { diskConformance 1 }
-diskGroups 		OBJECT IDENTIFIER ::= { diskConformance 2 }
+
+diskConformances 	OBJECT IDENTIFIER ::= { asustorDisk 2 }
+diskCompliances 	OBJECT IDENTIFIER ::= { diskConformances 1 }
+diskGroups			OBJECT IDENTIFIER ::= { diskConformances 2 }
 
 diskCompliance MODULE-COMPLIANCE
     STATUS  current
     DESCRIPTION
-            "The compliance statement for asustorDisk entities which
-            implement the ASUSTOR DISK MIB."
-    MODULE  -- this module
+		"The compliance force implement the ASUSTOR DISK MIB."
+    MODULE
         MANDATORY-GROUPS { diskGroup }
-
     ::= { diskCompliances 1 }
 
 diskGroup OBJECT-GROUP
-    OBJECTS { diskID,
-              diskModel,
-              diskType,
-              diskStatus,
-              diskTemperature}
+	OBJECTS { diskID,
+			  diskModel,
+	          diskType,
+	          diskStatus,
+			  diskSmartStatus,
+	          diskTemperature,
+			  diskSize }
     STATUS  current
     DESCRIPTION
             "A collection of objects providing basic information

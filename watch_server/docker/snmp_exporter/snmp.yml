@@ -249,56 +249,112 @@ modules:
   asustor:
     walk:
       - 1.3.6.1.2.1.1.3          # sysUpTime
-      - 1.3.6.1.4.1.44738.2.7.1.1.2 # cpuUsage
-      - 1.3.6.1.4.1.44738.2.8.1.1.2 # fanSpeed
+      - 1.3.6.1.4.1.44738.1.1    # sysSerialNumber
+      - 1.3.6.1.4.1.44738.1.2    # sysADMVersion
+      - 1.3.6.1.4.1.44738.2.1    # modelName
+      - 1.3.6.1.4.1.44738.2.2    # processorName
+      - 1.3.6.1.4.1.44738.2.3.1.2 # cpuUsage
+      - 1.3.6.1.4.1.44738.2.4.1.2 # fanSpeed
+      - 1.3.6.1.4.1.44738.2.5.1.2 # temperatureCpu
+      - 1.3.6.1.4.1.44738.2.5.1.3 # temperatureSys
+      - 1.3.6.1.4.1.44738.2.6.1.2 # memoryTotal
+      - 1.3.6.1.4.1.44738.2.6.1.3 # memoryFree
+      - 1.3.6.1.4.1.44738.2.6.1.4 # memoryFreePercentage
       - 1.3.6.1.4.1.44738.4.1.1.2 # diskID
       - 1.3.6.1.4.1.44738.4.1.1.3 # diskModel
+      - 1.3.6.1.4.1.44738.4.1.1.4 # diskType
       - 1.3.6.1.4.1.44738.4.1.1.5 # diskStatus
-      - 1.3.6.1.4.1.44738.4.1.1.6 # diskTemperature
+      - 1.3.6.1.4.1.44738.4.1.1.6 # diskSmartStatus
+      - 1.3.6.1.4.1.44738.4.1.1.7 # diskTemperature
+      - 1.3.6.1.4.1.44738.4.1.1.8 # diskSize
+      - 1.3.6.1.4.1.44738.5.1.1.2 # volumeName
+      - 1.3.6.1.4.1.44738.5.1.1.3 # volumeLevel
+      - 1.3.6.1.4.1.44738.5.1.1.4 # volumeStatus
+      - 1.3.6.1.4.1.44738.5.1.1.5 # volumeFileSystem
+      - 1.3.6.1.4.1.44738.5.1.1.6 # volumeTotalSize
+      - 1.3.6.1.4.1.44738.5.1.1.7 # volumeFreeSize
+      - 1.3.6.1.4.1.44738.6.1.1.2 # upsManufacture
+      - 1.3.6.1.4.1.44738.6.1.1.3 # upsModel
+      - 1.3.6.1.4.1.44738.6.1.1.7 # upsStatus
+      - 1.3.6.1.4.1.44738.6.1.1.8 # upsBatteryRemainSecond
+      - 1.3.6.1.4.1.44738.6.1.1.9 # upsBatteryChargePercent
+      - 1.3.6.1.4.1.44738.6.1.1.10 # upsBatteryChargeLowPercent
+      - 1.3.6.1.4.1.44738.6.1.1.11 # upsInputVoltage
       - 1.3.6.1.2.1.31.1.1.1.6   # ifHCInOctets
       - 1.3.6.1.2.1.31.1.1.1.10  # ifHCOutOctets
       - 1.3.6.1.2.1.31.1.1.1.1   # ifName
       - 1.3.6.1.2.1.2.2.1.8      # ifOperStatus
     get:
       - 1.3.6.1.2.1.1.3.0
-      - 1.3.6.1.4.1.44738.2.2.0
-      - 1.3.6.1.4.1.44738.2.3.0
-      - 1.3.6.1.4.1.44738.2.4.0
-      - 1.3.6.1.4.1.44738.2.5.0
     metrics:
       - name: sysUpTime
         oid: 1.3.6.1.2.1.1.3
         type: gauge
         help: System uptime.
-      - name: asustorSysTemperature
+      - name: asustorSysSerialNumber
+        oid: 1.3.6.1.4.1.44738.1.1
+        type: DisplayString
+        help: Asustor system serial number.
+      - name: asustorSysADMVersion
+        oid: 1.3.6.1.4.1.44738.1.2
+        type: DisplayString
+        help: Asustor ADM version.
+      - name: asustorModelName
+        oid: 1.3.6.1.4.1.44738.2.1
+        type: DisplayString
+        help: Asustor model name.
+      - name: asustorProcessorName
         oid: 1.3.6.1.4.1.44738.2.2
-        type: gauge
-        help: System temperature in Celsius.
-      - name: asustorCPUTemperature
-        oid: 1.3.6.1.4.1.44738.2.3
-        type: gauge
-        help: CPU temperature in Celsius.
-      - name: asustorTotalMemMB
-        oid: 1.3.6.1.4.1.44738.2.4
-        type: gauge
-        help: Total memory in MB.
-      - name: asustorFreeMemMB
-        oid: 1.3.6.1.4.1.44738.2.5
-        type: gauge
-        help: Free memory in MB.
+        type: DisplayString
+        help: Asustor CPU model.
       - name: asustorCPUUsage
-        oid: 1.3.6.1.4.1.44738.2.7.1.1.2
+        oid: 1.3.6.1.4.1.44738.2.3.1.2
         type: gauge
         help: CPU usage percentage.
         indexes:
           - labelname: cpuIndex
             type: gauge
       - name: asustorFanSpeed
-        oid: 1.3.6.1.4.1.44738.2.8.1.1.2
+        oid: 1.3.6.1.4.1.44738.2.4.1.2
         type: gauge
         help: Fan speed in RPM.
         indexes:
           - labelname: fanIndex
+            type: gauge
+      - name: asustorCPUTemperature
+        oid: 1.3.6.1.4.1.44738.2.5.1.2
+        type: gauge
+        help: CPU temperature in Celsius.
+        indexes:
+          - labelname: temperatureIndex
+            type: gauge
+      - name: asustorSysTemperature
+        oid: 1.3.6.1.4.1.44738.2.5.1.3
+        type: gauge
+        help: System temperature in Celsius.
+        indexes:
+          - labelname: temperatureIndex
+            type: gauge
+      - name: asustorTotalMemMB
+        oid: 1.3.6.1.4.1.44738.2.6.1.2
+        type: gauge
+        help: Total memory in MB.
+        indexes:
+          - labelname: memoryIndex
+            type: gauge
+      - name: asustorFreeMemMB
+        oid: 1.3.6.1.4.1.44738.2.6.1.3
+        type: gauge
+        help: Free memory in MB.
+        indexes:
+          - labelname: memoryIndex
+            type: gauge
+      - name: asustorFreeMemPercentage
+        oid: 1.3.6.1.4.1.44738.2.6.1.4
+        type: gauge
+        help: Percentage of free memory.
+        indexes:
+          - labelname: memoryIndex
             type: gauge
       - name: asustorDiskID
         oid: 1.3.6.1.4.1.44738.4.1.1.2
@@ -314,6 +370,13 @@ modules:
         indexes:
           - labelname: diskIndex
             type: gauge
+      - name: asustorDiskType
+        oid: 1.3.6.1.4.1.44738.4.1.1.4
+        type: DisplayString
+        help: Disk type.
+        indexes:
+          - labelname: diskIndex
+            type: gauge
       - name: asustorDiskStatus
         oid: 1.3.6.1.4.1.44738.4.1.1.5
         type: DisplayString
@@ -321,12 +384,117 @@ modules:
         indexes:
           - labelname: diskIndex
             type: gauge
-      - name: asustorDiskTemperature
+      - name: asustorDiskSmartStatus
         oid: 1.3.6.1.4.1.44738.4.1.1.6
+        type: DisplayString
+        help: Disk SMART status string.
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: asustorDiskTemperature
+        oid: 1.3.6.1.4.1.44738.4.1.1.7
         type: gauge
         help: Disk temperature in Celsius.
         indexes:
           - labelname: diskIndex
+            type: gauge
+      - name: asustorDiskSizeGB
+        oid: 1.3.6.1.4.1.44738.4.1.1.8
+        type: gauge
+        help: Disk size in GB.
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: asustorVolumeName
+        oid: 1.3.6.1.4.1.44738.5.1.1.2
+        type: DisplayString
+        help: Volume name.
+        indexes:
+          - labelname: volumeIndex
+            type: gauge
+      - name: asustorVolumeLevel
+        oid: 1.3.6.1.4.1.44738.5.1.1.3
+        type: DisplayString
+        help: Volume RAID level.
+        indexes:
+          - labelname: volumeIndex
+            type: gauge
+      - name: asustorVolumeStatus
+        oid: 1.3.6.1.4.1.44738.5.1.1.4
+        type: DisplayString
+        help: Volume status string.
+        indexes:
+          - labelname: volumeIndex
+            type: gauge
+      - name: asustorVolumeFileSystem
+        oid: 1.3.6.1.4.1.44738.5.1.1.5
+        type: DisplayString
+        help: Volume file system.
+        indexes:
+          - labelname: volumeIndex
+            type: gauge
+      - name: asustorVolumeTotalSizeGB
+        oid: 1.3.6.1.4.1.44738.5.1.1.6
+        type: gauge
+        help: Total volume size in GB.
+        indexes:
+          - labelname: volumeIndex
+            type: gauge
+      - name: asustorVolumeFreeSizeGB
+        oid: 1.3.6.1.4.1.44738.5.1.1.7
+        type: gauge
+        help: Remaining free volume size in GB.
+        indexes:
+          - labelname: volumeIndex
+            type: gauge
+      - name: asustorUpsManufacture
+        oid: 1.3.6.1.4.1.44738.6.1.1.2
+        type: DisplayString
+        help: UPS manufacturer.
+        indexes:
+          - labelname: upsIndex
+            type: gauge
+      - name: asustorUpsModel
+        oid: 1.3.6.1.4.1.44738.6.1.1.3
+        type: DisplayString
+        help: UPS model.
+        indexes:
+          - labelname: upsIndex
+            type: gauge
+      - name: asustorUpsStatus
+        oid: 1.3.6.1.4.1.44738.6.1.1.7
+        type: DisplayString
+        help: UPS status string.
+        indexes:
+          - labelname: upsIndex
+            type: gauge
+      - name: asustorUpsBatteryRemainSecond
+        oid: 1.3.6.1.4.1.44738.6.1.1.8
+        type: gauge
+        help: UPS remaining runtime in seconds.
+        indexes:
+          - labelname: upsIndex
+            type: gauge
+      - name: asustorUpsBatteryChargePercent
+        oid: 1.3.6.1.4.1.44738.6.1.1.9
+        type: gauge
+        help: UPS battery charge percentage.
+        indexes:
+          - labelname: upsIndex
+            type: gauge
+      - name: asustorUpsBatteryChargeLowPercent
+        oid: 1.3.6.1.4.1.44738.6.1.1.10
+        type: gauge
+        help: UPS low battery trigger percentage.
+        indexes:
+          - labelname: upsIndex
+            type: gauge
+      - name: asustorUpsInputVoltage
+        oid: 1.3.6.1.4.1.44738.6.1.1.11
+        type: gauge
+        help: UPS input voltage in Volts.
+        indexes:
+          - labelname: upsIndex
             type: gauge
       - name: ifName
         oid: 1.3.6.1.2.1.31.1.1.1.1
