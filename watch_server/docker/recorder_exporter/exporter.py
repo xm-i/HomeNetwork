@@ -34,6 +34,7 @@ STORAGE_LOW_THRESHOLD_GB = float(os.environ.get("STORAGE_LOW_THRESHOLD_GB", "100
 STORAGE_USED_PERCENT_THRESHOLD = float(os.environ.get("STORAGE_USED_PERCENT_THRESHOLD", "95"))
 STORAGE_REMIND_INTERVAL_SECONDS = int(os.environ.get("STORAGE_REMIND_INTERVAL_SECONDS", "86400"))
 TUNER_FAULT_THRESHOLD_SECONDS = int(os.environ.get("TUNER_FAULT_THRESHOLD_SECONDS", "600"))
+SERVICE_DOWN_THRESHOLD_SECONDS = int(os.environ.get("SERVICE_DOWN_THRESHOLD_SECONDS", "180"))
 
 class State:
     def __init__(self):
@@ -44,7 +45,9 @@ class State:
 
         # Alert tracking state
         self.epg_up = True
+        self.epg_down_since = None
         self.mirakurun_up = True
+        self.mirakurun_down_since = None
         self.active_conflicts = 0
         self.faulty_tuners = set()
         self.tuner_fault_since = {}
@@ -79,38 +82,56 @@ def send_webhook(title, message, color_emoji=":warning:"):
     except Exception as e:
         logger.error("Failed to send webhook notification: %s", e)
 
+def _check_service_status(service_name, service_url, is_up, up_attr, down_since_attr, now):
+    """Track service downtime duration and notify only when down continuously past the threshold."""
+    was_up = getattr(state, up_attr)
+    down_since = getattr(state, down_since_attr)
+    if not is_up:
+        if down_since is None:
+            setattr(state, down_since_attr, now)
+            down_since = now
+        if was_up and (now - down_since) >= SERVICE_DOWN_THRESHOLD_SECONDS:
+            setattr(state, up_attr, False)
+            minutes = SERVICE_DOWN_THRESHOLD_SECONDS // 60
+            time_desc = f"{minutes}分" if minutes > 0 else f"{SERVICE_DOWN_THRESHOLD_SECONDS}秒"
+            send_webhook(
+                f"{service_name} 接続異常",
+                f"{service_name} ({service_url}) への接続失敗が **{time_desc}以上継続** しています。",
+                ":rotating_light:"
+            )
+    else:
+        setattr(state, down_since_attr, None)
+        if not was_up:
+            setattr(state, up_attr, True)
+            send_webhook(
+                f"{service_name} 接続復旧",
+                f"{service_name} ({service_url}) との接続が復旧しました。",
+                ":white_check_mark:"
+            )
+
 def check_alerts(epg_data, mirakurun_data):
     now = time.time()
 
     # 1. Service Up / Down
     epg_up = epg_data.get("up", False)
-    if not epg_up and state.epg_up:
-        state.epg_up = False
-        send_webhook("EPGStation 接続異常", f"EPGStation ({EPGSTATION_URL}) への接続に失敗しました。", ":rotating_light:")
-    elif epg_up and not state.epg_up:
-        state.epg_up = True
-        send_webhook("EPGStation 接続復旧", f"EPGStation ({EPGSTATION_URL}) との接続が復旧しました。", ":white_check_mark:")
+    _check_service_status("EPGStation", EPGSTATION_URL, epg_up, "epg_up", "epg_down_since", now)
 
     m_up = mirakurun_data.get("up", False)
-    if not m_up and state.mirakurun_up:
-        state.mirakurun_up = False
-        send_webhook("Mirakurun 接続異常", f"Mirakurun ({MIRAKURUN_URL}) への接続に失敗しました。", ":rotating_light:")
-    elif m_up and not state.mirakurun_up:
-        state.mirakurun_up = True
-        send_webhook("Mirakurun 接続復旧", f"Mirakurun ({MIRAKURUN_URL}) との接続が復旧しました。", ":white_check_mark:")
+    _check_service_status("Mirakurun", MIRAKURUN_URL, m_up, "mirakurun_up", "mirakurun_down_since", now)
 
     # 2. Reserve Conflicts (録画競合・重複エラー)
-    conflicts = epg_data.get("reserves", {}).get("conflicts", 0)
-    if conflicts > 0 and state.active_conflicts == 0:
-        state.active_conflicts = conflicts
-        send_webhook(
-            "録画予約競合 (Conflict) 発生！",
-            f"チューナー不足または時間重複により、**{conflicts} 件**の予約が競合しています。予約確認を行ってください。",
-            ":rotating_light:"
-        )
-    elif conflicts == 0 and state.active_conflicts > 0:
-        state.active_conflicts = 0
-        send_webhook("録画予約競合 解消", "予約競合が解消されました。全予約が正常に割り当てられています。", ":white_check_mark:")
+    if epg_up:
+        conflicts = epg_data.get("reserves", {}).get("conflicts", 0)
+        if conflicts > 0 and state.active_conflicts == 0:
+            state.active_conflicts = conflicts
+            send_webhook(
+                "録画予約競合 (Conflict) 発生！",
+                f"チューナー不足または時間重複により、**{conflicts} 件**の予約が競合しています。予約確認を行ってください。",
+                ":rotating_light:"
+            )
+        elif conflicts == 0 and state.active_conflicts > 0:
+            state.active_conflicts = 0
+            send_webhook("録画予約競合 解消", "予約競合が解消されました。全予約が正常に割り当てられています。", ":white_check_mark:")
 
     # 3. Tuners Fault / Unavailability
     # Mirakurun が正常に応答している場合のみ判定（一時的なスクレイプ失敗で状態がクリアされるのを防止）
@@ -161,77 +182,79 @@ def check_alerts(epg_data, mirakurun_data):
             state.faulty_tuners.difference_update(recovered_faulty)
 
     # 4. Storage Low warning
-    current_low = {}
-    for s in epg_data.get("storages", []):
-        name = s.get("name", "unknown")
-        avail_gb = s.get("available", 0) / (1024 ** 3)
-        pct = (s.get("used", 0) / s.get("total", 1)) * 100 if s.get("total", 0) > 0 else 0
-        if avail_gb < STORAGE_LOW_THRESHOLD_GB or pct >= STORAGE_USED_PERCENT_THRESHOLD:
-            current_low[name] = (avail_gb, pct)
+    if epg_up:
+        current_low = {}
+        for s in epg_data.get("storages", []):
+            name = s.get("name", "unknown")
+            avail_gb = s.get("available", 0) / (1024 ** 3)
+            pct = (s.get("used", 0) / s.get("total", 1)) * 100 if s.get("total", 0) > 0 else 0
+            if avail_gb < STORAGE_LOW_THRESHOLD_GB or pct >= STORAGE_USED_PERCENT_THRESHOLD:
+                current_low[name] = (avail_gb, pct)
 
-    current_low_names = set(current_low.keys())
-    new_low = current_low_names - state.low_storages
-    recovered_low = state.low_storages - current_low_names
+        current_low_names = set(current_low.keys())
+        new_low = current_low_names - state.low_storages
+        recovered_low = state.low_storages - current_low_names
 
-    if new_low:
-        messages = [
-            f"- `{name}` (残 {current_low[name][0]:.1f}GB / 使用率 {current_low[name][1]:.1f}%)"
-            for name in new_low
-        ]
-        send_webhook(
-            "録画ストレージ容量警告",
-            f"ストレージ容量が閾値を下回りました:\n" + "\n".join(messages),
-            ":warning:"
-        )
-        for name in new_low:
-            state.alert_cooldowns[f"storage_{name}"] = now
-
-    # 閾値を下回った状態が長期間継続している場合のリマインド通知
-    if STORAGE_REMIND_INTERVAL_SECONDS > 0:
-        remind_low = []
-        for name in current_low_names - new_low:
-            last_alert = state.alert_cooldowns.get(f"storage_{name}", 0)
-            if now - last_alert >= STORAGE_REMIND_INTERVAL_SECONDS:
-                state.alert_cooldowns[f"storage_{name}"] = now
-                remind_low.append(name)
-
-        if remind_low:
+        if new_low:
             messages = [
                 f"- `{name}` (残 {current_low[name][0]:.1f}GB / 使用率 {current_low[name][1]:.1f}%)"
-                for name in remind_low
+                for name in new_low
             ]
             send_webhook(
-                "録画ストレージ容量警告 (継続リマインド)",
-                f"ストレージ容量が閾値を下回った状態が続いています:\n" + "\n".join(messages),
+                "録画ストレージ容量警告",
+                f"ストレージ容量が閾値を下回りました:\n" + "\n".join(messages),
                 ":warning:"
             )
+            for name in new_low:
+                state.alert_cooldowns[f"storage_{name}"] = now
 
-    if recovered_low:
-        messages = [f"- `{name}`" for name in recovered_low]
-        send_webhook(
-            "録画ストレージ容量復旧",
-            f"以下のストレージ容量が正常範囲に回復しました:\n" + "\n".join(messages),
-            ":white_check_mark:"
-        )
-        for name in recovered_low:
-            state.alert_cooldowns.pop(f"storage_{name}", None)
+        # 閾値を下回った状態が長期間継続している場合のリマインド通知
+        if STORAGE_REMIND_INTERVAL_SECONDS > 0:
+            remind_low = []
+            for name in current_low_names - new_low:
+                last_alert = state.alert_cooldowns.get(f"storage_{name}", 0)
+                if now - last_alert >= STORAGE_REMIND_INTERVAL_SECONDS:
+                    state.alert_cooldowns[f"storage_{name}"] = now
+                    remind_low.append(name)
 
-    state.low_storages = current_low_names
+            if remind_low:
+                messages = [
+                    f"- `{name}` (残 {current_low[name][0]:.1f}GB / 使用率 {current_low[name][1]:.1f}%)"
+                    for name in remind_low
+                ]
+                send_webhook(
+                    "録画ストレージ容量警告 (継続リマインド)",
+                    f"ストレージ容量が閾値を下回った状態が続いています:\n" + "\n".join(messages),
+                    ":warning:"
+                )
+
+        if recovered_low:
+            messages = [f"- `{name}`" for name in recovered_low]
+            send_webhook(
+                "録画ストレージ容量復旧",
+                f"以下のストレージ容量が正常範囲に回復しました:\n" + "\n".join(messages),
+                ":white_check_mark:"
+            )
+            for name in recovered_low:
+                state.alert_cooldowns.pop(f"storage_{name}", None)
+
+        state.low_storages = current_low_names
 
     # 5. Drop Packets Warning
-    current_drops = mirakurun_data.get("total_drops", 0)
-    if current_drops > state.last_drops_total:
-        diff = current_drops - state.last_drops_total
-        # Rate-limit drop alerts to once every 10 minutes
-        last_alert = state.alert_cooldowns.get("drop", 0)
-        if now - last_alert > 600:
-            state.alert_cooldowns["drop"] = now
-            send_webhook(
-                "ストリームドロップ (パケット欠落) 検知",
-                f"現在録画/配信中のストリームで **{diff}** パケットのドロップが発生しました。(合計ドロップ: {current_drops})",
-                ":warning:"
-            )
-    state.last_drops_total = current_drops
+    if m_up:
+        current_drops = mirakurun_data.get("total_drops", 0)
+        if current_drops > state.last_drops_total:
+            diff = current_drops - state.last_drops_total
+            # Rate-limit drop alerts to once every 10 minutes
+            last_alert = state.alert_cooldowns.get("drop", 0)
+            if now - last_alert > 600:
+                state.alert_cooldowns["drop"] = now
+                send_webhook(
+                    "ストリームドロップ (パケット欠落) 検知",
+                    f"現在録画/配信中のストリームで **{diff}** パケットのドロップが発生しました。(合計ドロップ: {current_drops})",
+                    ":warning:"
+                )
+        state.last_drops_total = current_drops
 
 def collect_metrics():
     while True:
@@ -240,13 +263,13 @@ def collect_metrics():
             epg_data = {"up": False, "reserves": {}, "storages": [], "encode": {}, "recording": {}}
             try:
                 fetch_json(f"{EPGSTATION_URL}/api/version")
-                epg_data["up"] = True
                 epg_data["recording"] = fetch_json(f"{EPGSTATION_URL}/api/recording?isHalfWidth=true")
                 epg_data["reserves"] = fetch_json(f"{EPGSTATION_URL}/api/reserves/cnts")
                 storages_res = fetch_json(f"{EPGSTATION_URL}/api/storages")
                 epg_data["storages"] = storages_res.get("items", [])
                 epg_data["encode"] = fetch_json(f"{EPGSTATION_URL}/api/encode?isHalfWidth=true")
                 epg_data["recorded"] = fetch_json(f"{EPGSTATION_URL}/api/recorded?isHalfWidth=true&limit=5")
+                epg_data["up"] = True
             except Exception as e:
                 logger.warning("EPGStation scrape failed: %s", e)
 
@@ -254,7 +277,6 @@ def collect_metrics():
             mirakurun_data = {"up": False, "status": {}, "tuners": [], "total_drops": 0, "tuner_drops": {}}
             try:
                 mirakurun_data["status"] = fetch_json(f"{MIRAKURUN_URL}/api/status")
-                mirakurun_data["up"] = True
                 tuners = fetch_json(f"{MIRAKURUN_URL}/api/tuners")
                 mirakurun_data["tuners"] = tuners
 
@@ -268,6 +290,7 @@ def collect_metrics():
                     mirakurun_data["tuner_drops"][idx] = t_drop
                     total_drops += t_drop
                 mirakurun_data["total_drops"] = total_drops
+                mirakurun_data["up"] = True
             except Exception as e:
                 logger.warning("Mirakurun scrape failed: %s", e)
 
