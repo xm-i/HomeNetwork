@@ -1,0 +1,84 @@
+groups:
+  - name: host_and_exporter_health
+    rules:
+      - alert: HostDown
+        # aqua-raspi.internal は休止中のため通知対象外
+        expr: up{job="node", instance!="aqua-raspi.internal:9100"} == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ホスト疎通不可 ({{ $labels.instance }})"
+          description: "{{ $labels.instance }} の node_exporter から3分以上応答がありません（サーバー停止・再起動失敗・ネットワーク障害の可能性）。"
+
+      - alert: BlackboxExporterDown
+        expr: up{job="blackbox_exporter"} == 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Blackbox Exporter 監視停止 ({{ $labels.instance }})"
+          description: "blackbox-exporter からのメトリクス取得が3分以上失敗しています（Web 外形監視が停止している可能性があります）。"
+
+      - alert: RecorderExporterDown
+        expr: up{job="recorder"} == 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Recorder Exporter 監視停止 ({{ $labels.instance }})"
+          description: "recorder-exporter からのメトリクス取得が3分以上失敗しています（録画サーバー監視・通知が停止している可能性があります）。"
+
+  - name: systemd_services
+    rules:
+      - alert: SystemdServiceDown
+        expr: |
+          (
+            node_systemd_unit_state{instance="home-server.internal:9100", name=~"nginx\\.service|jenkins\\.service|back_end_api\\.service|home_automation\\.service", state="active"} == 0
+          )
+          or
+          (
+            node_systemd_unit_state{instance="db-server.internal:9100", name=~"postgresql@.*-main\\.service", state="active"} == 0
+          )
+          or
+          (
+            node_systemd_unit_state{instance="dns-server.internal:9100", name=~"dnsmasq\\.service|dhcp_web\\.service|dhcp_assign_notifier\\.service", state="active"} == 0
+          )
+          or
+          (
+            node_systemd_unit_state{instance="batch-server.internal:9100", name=~"rundeckd\\.service|postgresql@.*-main\\.service", state="active"} == 0
+          )
+          or
+          (
+            node_systemd_unit_state{instance="pinpon-server.internal:9100", name=~"pinpon\\.service", state="active"} == 0
+          )
+          or
+          (
+            node_systemd_unit_state{instance="watch-server.internal:9100", name=~"docker\\.service", state="active"} == 0
+          )
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "systemd サービス停止 ({{ $labels.instance }} / {{ $labels.name }})"
+          description: "{{ $labels.instance }} 上の {{ $labels.name }} が2分以上 active ではありません。"
+
+  - name: https_endpoints
+    rules:
+      - alert: HttpsEndpointDown
+        expr: probe_success{job=~"blackbox_https.*"} == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTPS エンドポイント異常 ({{ $labels.instance }})"
+          description: "{{ $labels.instance }} への HTTPS プローブが3分以上失敗しています（Nginx 停止・バックエンド障害・名前解決エラー等）。"
+
+      - alert: SslCertificateExpiringSoon
+        expr: (probe_ssl_earliest_cert_expiry{job=~"blackbox_https.*"} - time()) / 86400 < 30
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "TLS 証明書有効期限間近 ({{ $labels.instance }})"
+          description: "{{ $labels.instance }} の TLS 証明書有効期限が残り {{ $value | printf \"%.1f\" }} 日です。"

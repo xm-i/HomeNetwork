@@ -12,12 +12,15 @@ services:
       - '--web.enable-lifecycle'
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules.yml:/etc/prometheus/rules.yml:ro
       - ./data/prometheus:/prometheus
     ports:
       - "9090:9090"
     depends_on:
       - snmp-exporter
       - recorder-exporter
+      - blackbox-exporter
+      - alertmanager
 
   recorder-exporter:
     build:
@@ -55,6 +58,45 @@ services:
       - "162:162/udp"
     volumes:
       - ./mibs:/etc/snmp/mibs:ro
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.26.0
+    container_name: blackbox-exporter
+    restart: always
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+    volumes:
+      - ./blackbox_exporter/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    ports:
+      - "9115:9115"
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.0
+    container_name: alertmanager
+    restart: always
+    env_file:
+      - env_file
+    environment:
+      - TZ=Asia/Tokyo
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        WEBHOOK="$${ALERT_WEBHOOK_URL:-$${SNMP_TRAP_WEBHOOK_URL}}"
+        if [ -z "$$WEBHOOK" ]; then
+          echo "ERROR: ALERT_WEBHOOK_URL and SNMP_TRAP_WEBHOOK_URL are both empty." >&2
+          sleep 30
+          exit 1
+        fi
+        printf '%s' "$$WEBHOOK" > /tmp/slack_webhook_url
+        exec /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager --web.external-url=http://watch-server.internal:9093/
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./data/alertmanager:/alertmanager
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "9093:9093"
 
   grafana:
     image: grafana/grafana:11.2.0

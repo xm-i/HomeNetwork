@@ -123,11 +123,25 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
   - db-server (PostgreSQL)
   - batch-server
   - dns-server.internal (10.0.0.2 / DNS & DHCP)
-  - aqua-raspi (アクアリウムIoT)
+  - pinpon-server (10.0.3.6 / Pinpon Web サービス)
+  - aqua-raspi (アクアリウムIoT ※現在アラート対象外)
   - rtx1210 (10.0.0.1 / ルーター / SNMPポーリング & トラップ監視)
   - xs708t (10.0.0.3 / 10G L2スイッチ / ポートトラフィック監視)
   - nas (10.0.0.5 / ASUSTOR NAS / CPU・メモリ・温度・ディスク健康状態監視)
   - recorder (10.0.0.8 / EPGStation & Mirakurun / 録画健全性・予約競合・チューナードロップ監視)
+  - `*.home-server.internal` 各 HTTPS エンドポイント (Blackbox Exporter による外形・TLS 証明書期限監視)
+
+## 死活・サービス停止アラート (Prometheus + Alertmanager)
+
+`watch_server/docker/prometheus/rules.yml` および `watch_server/docker/alertmanager/alertmanager.yml` により、以下の異常検知と復旧通知を Slack へ送信します。
+
+- **通知先**: `watch_server/docker/env_file` の `ALERT_WEBHOOK_URL`（未設定時は `SNMP_TRAP_WEBHOOK_URL` にフォールバック）
+- **主なアラートルール**:
+  - `HostDown`: `node` ジョブの `up == 0` が 3 分継続（`aqua-raspi.internal` 除外）
+  - `SystemdServiceDown`: `nginx` / `jenkins` / `back_end_api` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` の停止（2 分継続）
+  - `HttpsEndpointDown`: Nginx 配下全 `*.home-server.internal` の HTTPS プローブ失敗（3 分継続）
+  - `SslCertificateExpiringSoon`: TLS 証明書の残り有効期限が 30 日未満
+  - `BlackboxExporterDown` / `RecorderExporterDown`: 各エクスポーターの取得失敗（3 分継続）
 
 ## 録画サーバー監視 (Recorder / EPGStation & Mirakurun)
 

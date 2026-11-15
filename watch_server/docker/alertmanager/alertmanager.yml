@@ -1,0 +1,35 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'slack-notifications'
+  group_by: ['alertname', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+inhibit_rules:
+  - source_matchers:
+      - alertname = "HostDown"
+    target_matchers:
+      - alertname = "SystemdServiceDown"
+    equal: ['instance']
+
+receivers:
+  - name: 'slack-notifications'
+    slack_configs:
+      - api_url_file: '/tmp/slack_webhook_url'
+        channel: '#alerts'
+        send_resolved: true
+        username: 'Alertmanager'
+        icon_emoji: '{{ if eq .Status "firing" }}:rotating_light:{{ else }}:white_check_mark:{{ end }}'
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: >-
+          {{ if eq .Status "firing" }}:rotating_light: [障害検知 {{ .Alerts.Firing | len }}件]{{ else }}:white_check_mark: [復旧]{{ end }}
+          {{ .CommonLabels.alertname }}
+        text: |-
+          {{ range .Alerts -}}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          発生時刻: {{ .StartsAt.Local.Format "2006-01-02 15:04:05" }}{{ if eq .Status "resolved" }} / 復旧時刻: {{ .EndsAt.Local.Format "2006-01-02 15:04:05" }}{{ end }}
+          {{ end }}

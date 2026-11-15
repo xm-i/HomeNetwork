@@ -2,6 +2,15 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+rule_files:
+  - '/etc/prometheus/rules.yml'
+
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
@@ -15,6 +24,7 @@ scrape_configs:
           - 'db-server.internal:9100'
           - 'batch-server.internal:9100'
           - 'dns-server.internal:9100'
+          - 'pinpon-server.internal:9100'
           - 'aqua-raspi.internal:9100'
           # - 'recorder.internal:9100'
         labels:
@@ -88,7 +98,6 @@ scrape_configs:
       - target_label: __address__
         replacement: snmp-exporter:9116
 
-
   # Recorder: EPGStation & Mirakurun
   - job_name: 'recorder'
     scrape_interval: 15s
@@ -100,3 +109,57 @@ scrape_configs:
           device: 'recorder'
           role: 'recorder'
           environment: 'production'
+
+  # Blackbox Exporter 自身の死活監視
+  - job_name: 'blackbox_exporter'
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+          - 'blackbox-exporter:9115'
+
+  # HTTPS 外形監視 (home-server Nginx 配下)
+  - job_name: 'blackbox_https'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - 'https://home-server.internal/'
+          - 'https://dashboard.home-server.internal/'
+          - 'https://jenkins.home-server.internal/login'
+          - 'https://monitor.home-server.internal/api/health'
+          - 'https://grafana.home-server.internal/api/health'
+          - 'https://recorder.home-server.internal/'
+          - 'https://rundeck.home-server.internal/user/login'
+          - 'https://pinpon.home-server.internal/'
+        labels:
+          environment: 'production'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # HTTPS 外形監視 (ルートが 404 を返す API サーバー向け)
+  - job_name: 'blackbox_https_api'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /probe
+    params:
+      module: [http_2xx_404]
+    static_configs:
+      - targets:
+          - 'https://dashboard-api.home-server.internal/'
+        labels:
+          environment: 'production'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

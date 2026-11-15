@@ -1,0 +1,26 @@
+modules:
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: []
+      method: GET
+      follow_redirects: true
+      preferred_ip_protocol: "ip4"
+      tls_config:
+        # 内部 mkcert 証明書（*.home-server.internal）向けに設定。
+        # TLS 接続および probe_ssl_earliest_cert_expiry による期限監視は引き続き有効。
+        insecure_skip_verify: true
+
+  http_2xx_404:
+    prober: http
+    timeout: 10s
+    http:
+      # ルート (/) にハンドラを持たず 404 を返す API サーバー向け。
+      # Nginx 停止時は接続拒否、バックエンド停止時は 502/503/504 となるため異常検知可能。
+      valid_status_codes: [200, 404]
+      method: GET
+      follow_redirects: true
+      preferred_ip_protocol: "ip4"
+      tls_config:
+        insecure_skip_verify: true

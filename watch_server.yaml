@@ -59,6 +59,12 @@
             group: watch,
             mode: "0777",
           }
+        - {
+            path: /home/watch/docker/data/alertmanager,
+            owner: watch,
+            group: watch,
+            mode: "0777",
+          }
 
     - name: Ensure env_file exists from default if missing
       copy:
