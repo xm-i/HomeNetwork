@@ -1,11 +1,14 @@
 [Unit]
 Description = Home Automation
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 WorkingDirectory=/opt/home-automation-service
-ExecStart=/root/dotnet/dotnet /opt/home-automation-service/HomeAutomation.dll
+ExecStart=/usr/bin/dotnet /opt/home-automation-service/HomeAutomation.dll
 Environment=DOTNET_CLI_HOME=./temp
 Restart=always
+RestartSec=5s
 Type=simple
 
 [Install]

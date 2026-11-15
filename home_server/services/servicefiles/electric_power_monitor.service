@@ -1,10 +1,13 @@
 [Unit]
 Description = Electric Power Monitor Service
+After=network-online.target nginx.service back_end_api.service
+Wants=network-online.target
 
 [Service]
 WorkingDirectory=/opt/electric-power-monitor-service
-ExecStart=/root/dotnet/dotnet /opt/electric-power-monitor-service/ElectricPowerMonitorService.dll
+ExecStart=/usr/bin/dotnet /opt/electric-power-monitor-service/ElectricPowerMonitorService.dll
 Restart=always
+RestartSec=5s
 Type=simple
 
 [Install]

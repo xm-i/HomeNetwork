@@ -1,10 +1,13 @@
 [Unit]
 Description = Back End Api Server
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 WorkingDirectory=/opt/back-end-api-service
-ExecStart=/root/dotnet/dotnet /opt/back-end-api-service/Back.dll
+ExecStart=/usr/bin/dotnet /opt/back-end-api-service/Back.dll
 Restart=always
+RestartSec=5s
 Type=simple
 
 [Install]

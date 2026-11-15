@@ -70,6 +70,7 @@
           - nginx
           - wakeonlan
           - prometheus-node-exporter
+          - aspnetcore-runtime-10.0
         state: present
         update_cache: yes
     - name: Ensure prometheus-node-exporter is enabled and started
@@ -170,8 +171,17 @@
     - name: restart nginx
       service: name=nginx state=restarted
     - name: restart back end api service
-      service: name=back_end_api state=restarted
+      systemd:
+        name: back_end_api
+        state: restarted
+        daemon_reload: yes
     - name: restart electric power monitor service
-      service: name=electric_power_monitor state=restarted
+      systemd:
+        name: electric_power_monitor
+        state: restarted
+        daemon_reload: yes
     - name: restart home automation service
-      service: name=home_automation state=restarted
+      systemd:
+        name: home_automation
+        state: restarted
+        daemon_reload: yes
