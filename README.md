@@ -93,7 +93,7 @@ sh execute.sh
     ```
     su jenkins
     ssh 10.0.0.2
-    ssh home-server.internal
+    ssh home.internal
     ssh aquaraspi.internal
     ssh dns-server.internal
     ssh ...全ホストやる
@@ -114,12 +114,12 @@ sh execute.sh
 
 Prometheus + Grafana + Node Exporter によるインフラメトリクス監視。
 
-- **URL**: `http://monitor.home-server.internal/` (または `http://grafana.home-server.internal/`)
+- **URL**: `http://monitor.home.internal/` (または `http://grafana.home.internal/`)
 - **初期アカウント**: `admin` / `admin`
 - **ダッシュボード**: 「Nodes Overview」が自動プロビジョニングされ、全サーバーのCPU・メモリ・ディスク・NW状態が一覧確認可能
 - **監視対象ノード**:
   - watch-server (監視サーバー自身)
-  - home-server (Web / Nginx / Jenkins)
+  - home.internal (Web / Nginx / Jenkins)
   - db-server (PostgreSQL)
   - batch-server
   - dns-server.internal (10.0.0.2 / DNS & DHCP)
@@ -129,7 +129,7 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
   - xs708t (10.0.0.3 / 10G L2スイッチ / ポートトラフィック監視)
   - nas (10.0.0.5 / ASUSTOR NAS / CPU・メモリ・温度・ディスク健康状態監視)
   - recorder (10.0.0.8 / EPGStation & Mirakurun / 録画健全性・予約競合・チューナードロップ監視)
-  - `*.home-server.internal` 各 HTTPS エンドポイント (Blackbox Exporter による外形・TLS 証明書期限監視)
+  - `*.home.internal` 各 HTTPS エンドポイント (Blackbox Exporter による外形・TLS 証明書期限監視)
 
 ## 死活・サービス停止アラート (Prometheus + Alertmanager)
 
@@ -139,7 +139,7 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
 - **主なアラートルール**:
   - `HostDown`: `node` ジョブの `up == 0` が 3 分継続（`aqua-raspi.internal` 除外）
   - `SystemdServiceDown`: `nginx` / `jenkins` / `back_end_api` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` の停止（2 分継続）
-  - `HttpsEndpointDown`: Nginx 配下全 `*.home-server.internal` の HTTPS プローブ失敗（3 分継続）
+  - `HttpsEndpointDown`: Nginx 配下全 `*.home.internal` の HTTPS プローブ失敗（3 分継続）
   - `SslCertificateExpiringSoon`: TLS 証明書の残り有効期限が 30 日未満
   - `BlackboxExporterDown` / `RecorderExporterDown`: 各エクスポーターの取得失敗（3 分継続）
 

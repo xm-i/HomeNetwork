@@ -8,7 +8,7 @@ modules:
       follow_redirects: true
       preferred_ip_protocol: "ip4"
       tls_config:
-        # 内部 mkcert 証明書（*.home-server.internal）向けに設定。
+        # 内部 mkcert 証明書（*.home.internal）向けに設定。
         # TLS 接続および probe_ssl_earliest_cert_expiry による期限監視は引き続き有効。
         insecure_skip_verify: true
 

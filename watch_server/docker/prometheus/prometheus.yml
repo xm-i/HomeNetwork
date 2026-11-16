@@ -20,7 +20,7 @@ scrape_configs:
     static_configs:
       - targets:
           - 'watch-server.internal:9100'
-          - 'home-server.internal:9100'
+          - 'home.internal:9100'
           - 'db-server.internal:9100'
           - 'batch-server.internal:9100'
           - 'dns-server.internal:9100'
@@ -117,7 +117,7 @@ scrape_configs:
       - targets:
           - 'blackbox-exporter:9115'
 
-  # HTTPS 外形監視 (home-server Nginx 配下)
+  # HTTPS 外形監視 (home.internal Nginx 配下)
   - job_name: 'blackbox_https'
     scrape_interval: 15s
     scrape_timeout: 10s
@@ -126,14 +126,14 @@ scrape_configs:
       module: [http_2xx]
     static_configs:
       - targets:
-          - 'https://home-server.internal/'
-          - 'https://dashboard.home-server.internal/'
-          - 'https://jenkins.home-server.internal/login'
-          - 'https://monitor.home-server.internal/api/health'
-          - 'https://grafana.home-server.internal/api/health'
-          - 'https://recorder.home-server.internal/'
-          - 'https://rundeck.home-server.internal/user/login'
-          - 'https://pinpon.home-server.internal/'
+          - 'https://home.internal/'
+          - 'https://dashboard.home.internal/'
+          - 'https://jenkins.home.internal/login'
+          - 'https://monitor.home.internal/api/health'
+          - 'https://grafana.home.internal/api/health'
+          - 'https://recorder.home.internal/'
+          - 'https://rundeck.home.internal/user/login'
+          - 'https://pinpon.home.internal/'
         labels:
           environment: 'production'
     relabel_configs:
@@ -153,7 +153,7 @@ scrape_configs:
       module: [http_2xx_404]
     static_configs:
       - targets:
-          - 'https://dashboard-api.home-server.internal/'
+          - 'https://dashboard-api.home.internal/'
         labels:
           environment: 'production'
     relabel_configs:

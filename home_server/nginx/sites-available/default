@@ -11,20 +11,20 @@ server {
 
 server{
     listen 443 ssl;
-    server_name home-server.internal;
+    server_name home.internal;
 
-    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
-    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_certificate /etc/nginx/certs/_wildcard.home.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home.internal+1-key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
-    rewrite ^(.*)$ https://dashboard.home-server.internal$1 permanent;
+    rewrite ^(.*)$ https://dashboard.home.internal$1 permanent;
 }
 server{
     listen 443 ssl;
-    server_name dashboard.home-server.internal;
+    server_name dashboard.home.internal;
 
-    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
-    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_certificate /etc/nginx/certs/_wildcard.home.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home.internal+1-key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     root /var/www/html/dashboard;
@@ -37,10 +37,10 @@ server{
 
 server{
     listen 443 ssl;
-    server_name dashboard-api.home-server.internal;
+    server_name dashboard-api.home.internal;
 
-    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
-    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_certificate /etc/nginx/certs/_wildcard.home.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home.internal+1-key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     location / {
@@ -60,10 +60,10 @@ server{
 }
 server{
     listen 443 ssl;
-    server_name jenkins.home-server.internal;
+    server_name jenkins.home.internal;
 
-    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
-    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_certificate /etc/nginx/certs/_wildcard.home.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home.internal+1-key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     location / {
@@ -80,10 +80,10 @@ server{
 }
 server{
     listen 443 ssl;
-    server_name monitor.home-server.internal grafana.home-server.internal;
+    server_name monitor.home.internal grafana.home.internal;
 
-    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
-    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_certificate /etc/nginx/certs/_wildcard.home.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home.internal+1-key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     location / {
@@ -104,10 +104,10 @@ server{
 server{
     listen 443 ssl;
     listen 8888;
-    server_name recorder.home-server.internal;
+    server_name recorder.home.internal;
 
-    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
-    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_certificate /etc/nginx/certs/_wildcard.home.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home.internal+1-key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     location / {
@@ -124,10 +124,10 @@ server{
 
 server{
     listen 443 ssl;
-    server_name rundeck.home-server.internal;
+    server_name rundeck.home.internal;
 
-    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
-    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_certificate /etc/nginx/certs/_wildcard.home.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home.internal+1-key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     location / {
@@ -141,10 +141,10 @@ server{
 
 server{
     listen 443 ssl;
-    server_name pinpon.home-server.internal;
+    server_name pinpon.home.internal;
 
-    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
-    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_certificate /etc/nginx/certs/_wildcard.home.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home.internal+1-key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     location / {
@@ -161,4 +161,29 @@ server{
         proxy_buffering off;
         proxy_read_timeout 100s;
     }
+}
+
+# 移行期間用: 旧ドメイン (home-server.internal / *.home-server.internal) から新ドメインへリダイレクト
+# API 等の POST リクエストでもメソッドが維持されるよう 307 を使用
+server{
+    listen 443 ssl;
+    server_name home-server.internal;
+
+    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    return 307 https://dashboard.home.internal$request_uri;
+}
+
+server{
+    listen 443 ssl;
+    listen 8888;
+    server_name ~^(?<subdomain>dashboard|dashboard-api|jenkins|monitor|grafana|recorder|rundeck|pinpon)\.home-server\.internal$;
+
+    ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    return 307 https://$subdomain.home.internal$request_uri;
 }

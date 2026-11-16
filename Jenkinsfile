@@ -14,6 +14,8 @@ node {
       configFileProvider([configFile(fileId: '007d1ea8-f543-45a2-b446-b52b3af1a3c5', targetLocation: 'home_server/nginx/sites-available/external')]) {}
       configFileProvider([configFile(fileId: '60dd20c7-4ea3-49b6-a4b4-e60d63ba82bc', targetLocation: 'home_server/nginx/certs/_wildcard.home-server.internal+1.pem')]) {}
       configFileProvider([configFile(fileId: 'bfaba23a-ed00-44f7-b5bc-d324931b9203', targetLocation: 'home_server/nginx/certs/_wildcard.home-server.internal+1-key.pem')]) {}
+      configFileProvider([configFile(fileId: 'd7188f02-d5be-4135-8275-8b1d34fbd2e9', targetLocation: 'home_server/nginx/certs/_wildcard.home.internal+1.pem')]) {}
+      configFileProvider([configFile(fileId: 'e0a983d0-7952-4c93-bc16-894370672f91', targetLocation: 'home_server/nginx/certs/_wildcard.home.internal+1-key.pem')]) {}
       configFileProvider([configFile(fileId: '67930ad9-94b3-45a8-b9e4-f0bc43890e3c', targetLocation: 'watch_server/docker/env_file')]) {}
       // configFileProvider([configFile(fileId: '175e94a1-29f4-4133-a270-b42f8cb6a7b8', targetLocation: 'watch_server/docker/zabbix-server/env_file')]) {}
       // configFileProvider([configFile(fileId: '0deaffda-78a8-4e02-86ad-1d963b074f72', targetLocation: 'watch_server/docker/zabbix-web/env_file')]) {}
