@@ -8,11 +8,12 @@
       timezone:
         name: Asia/Tokyo
 
-    - name: Install Java and node_exporter
+    - name: Install apt packages
       apt:
         name:
           - openjdk-11-jdk
           - prometheus-node-exporter
+          - aspnetcore-runtime-10.0
         state: present
         update_cache: yes
 
