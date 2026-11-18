@@ -1,0 +1,91 @@
+- hosts: cicd
+  become: yes
+  remote_user: cicd
+  gather_facts: no
+
+  tasks:
+    - name: Set timezone
+      timezone:
+        name: Asia/Tokyo
+
+    - name: Install apt packages
+      apt:
+        name:
+          - podman
+          - prometheus-node-exporter
+        state: present
+        update_cache: yes
+
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
+
+    - name: Configure sysctl for SonarQube (Elasticsearch)
+      copy:
+        dest: /etc/sysctl.d/99-sonarqube.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          vm.max_map_count=524288
+          fs.file-max=131072
+      notify:
+        - reload sysctl
+
+    - name: Create SonarQube directories
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: cicd
+        group: cicd
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: /opt/sonarqube, mode: "0755" }
+        - { path: /opt/sonarqube/data, mode: "0777" }
+        - { path: /opt/sonarqube/extensions, mode: "0777" }
+        - { path: /opt/sonarqube/logs, mode: "0777" }
+
+    - name: Configure SonarQube env_file
+      copy:
+        dest: /opt/sonarqube/env_file
+        owner: root
+        group: root
+        mode: "0600"
+        content: |
+          SONAR_JDBC_URL=jdbc:postgresql://db-server.internal:5432/{{ sonarqube.db.name | default('sonarqube') }}
+          SONAR_JDBC_USERNAME={{ sonarqube.db.user | default('sonarqube') }}
+          SONAR_JDBC_PASSWORD={{ sonarqube.db.password }}
+          TZ=Asia/Tokyo
+      notify:
+        - reload systemd and restart sonarqube service
+
+    - name: Copy sonarqube systemd service file
+      copy:
+        src: ./cicd_server/services/servicefiles/sonarqube.service
+        dest: /etc/systemd/system/sonarqube.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - reload systemd and restart sonarqube service
+
+    - name: Flush handlers before starting sonarqube
+      meta: flush_handlers
+
+    - name: Enable and start sonarqube service
+      service:
+        name: sonarqube
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: reload sysctl
+      command: sysctl --system
+
+    - name: reload systemd and restart sonarqube service
+      systemd:
+        name: sonarqube
+        state: restarted
+        daemon_reload: yes

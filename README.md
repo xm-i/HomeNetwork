@@ -124,6 +124,7 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
   - batch-server
   - dns-server.internal (10.0.0.2 / DNS & DHCP)
   - pinpon-server (10.0.3.6 / Pinpon Web サービス)
+  - cicd.internal (10.0.3.7 / SonarQube)
   - aqua-raspi (アクアリウムIoT ※現在アラート対象外)
   - rtx1210 (10.0.0.1 / ルーター / SNMPポーリング & トラップ監視)
   - xs708t (10.0.0.3 / 10G L2スイッチ / ポートトラフィック監視)
@@ -138,7 +139,7 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
 - **通知先**: `watch_server/docker/env_file` の `ALERT_WEBHOOK_URL`（未設定時は `SNMP_TRAP_WEBHOOK_URL` にフォールバック）
 - **主なアラートルール**:
   - `HostDown`: `node` ジョブの `up == 0` が 3 分継続（`aqua-raspi.internal` 除外）
-  - `SystemdServiceDown`: `nginx` / `jenkins` / `back_end_api` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` の停止（2 分継続）
+  - `SystemdServiceDown`: `nginx` / `jenkins` / `back_end_api` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` / `sonarqube` の停止（2 分継続）
   - `HttpsEndpointDown`: Nginx 配下全 `*.home.internal` の HTTPS プローブ失敗（3 分継続）
   - `SslCertificateExpiringSoon`: TLS 証明書の残り有効期限が 30 日未満
   - `BlackboxExporterDown` / `RecorderExporterDown`: 各エクスポーターの取得失敗（3 分継続）

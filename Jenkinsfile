@@ -11,6 +11,7 @@ node {
       configFileProvider([configFile(fileId: '00822a4e-2506-42a6-ab2f-320c805c8cdc', targetLocation: 'group_vars/watch.yaml')]) {}
       configFileProvider([configFile(fileId: '1ac1e035-f68a-4f76-bda0-17a5e8cb9892', targetLocation: 'group_vars/batch.yaml')]) {}
       configFileProvider([configFile(fileId: '7261e61a-8049-4b23-88cd-59cc328c41c5', targetLocation: 'group_vars/pinpon.yaml')]) {}
+      configFileProvider([configFile(fileId: '08db25be-824e-4efb-8883-f9a0c9a39827', targetLocation: 'group_vars/cicd.yaml')]) {}
       configFileProvider([configFile(fileId: '007d1ea8-f543-45a2-b446-b52b3af1a3c5', targetLocation: 'home_server/nginx/sites-available/external')]) {}
       configFileProvider([configFile(fileId: '60dd20c7-4ea3-49b6-a4b4-e60d63ba82bc', targetLocation: 'home_server/nginx/certs/_wildcard.home-server.internal+1.pem')]) {}
       configFileProvider([configFile(fileId: 'bfaba23a-ed00-44f7-b5bc-d324931b9203', targetLocation: 'home_server/nginx/certs/_wildcard.home-server.internal+1-key.pem')]) {}
@@ -46,6 +47,10 @@ node {
 
     stage('Ansible pinpon_server'){
       ansiblePlaybook credentialsId: '21e3a064-8b91-4e3e-ac42-c82ffd54598f', inventory: 'inventory_jenkins', limit: 'pinpon', playbook: 'playbook.yaml'
+    }
+
+    stage('Ansible cicd_server'){
+      ansiblePlaybook credentialsId: '73e7e465-687b-4a3f-b8d5-ab13332355af', inventory: 'inventory_jenkins', limit: 'cicd', playbook: 'playbook.yaml'
     }
 
     stage('Notify Slack'){

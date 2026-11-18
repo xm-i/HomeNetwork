@@ -25,6 +25,7 @@ scrape_configs:
           - 'batch-server.internal:9100'
           - 'dns-server.internal:9100'
           - 'pinpon-server.internal:9100'
+          - 'cicd.internal:9100'
           - 'aqua-raspi.internal:9100'
           # - 'recorder.internal:9100'
         labels:
@@ -134,6 +135,7 @@ scrape_configs:
           - 'https://recorder.home.internal/'
           - 'https://rundeck.home.internal/user/login'
           - 'https://pinpon.home.internal/'
+          - 'https://sonarqube.home.internal/'
         labels:
           environment: 'production'
     relabel_configs:

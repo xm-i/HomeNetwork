@@ -46,3 +46,10 @@ pinpon-server.internal
 [pinpon:vars]
 ansible_user=pinpon
 ansible_ssh_private_key_file=./pinpon_server/ssh_keys/pinpon_server.key
+
+[cicd]
+cicd.internal
+
+[cicd:vars]
+ansible_user=cicd
+ansible_ssh_private_key_file=./cicd_server/ssh_keys/cicd.key

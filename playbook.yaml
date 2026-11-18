@@ -12,3 +12,5 @@
   import_playbook: ./batch_server.yaml
 - name: pinpon_server
   import_playbook: ./pinpon_server.yaml
+- name: cicd_server
+  import_playbook: ./cicd_server.yaml

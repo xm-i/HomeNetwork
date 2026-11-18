@@ -163,6 +163,26 @@ server{
     }
 }
 
+server{
+    listen 443 ssl;
+    server_name sonarqube.home.internal;
+
+    ssl_certificate /etc/nginx/certs/_wildcard.home.internal+1.pem;
+    ssl_certificate_key /etc/nginx/certs/_wildcard.home.internal+1-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    client_max_body_size 100M;
+
+    location / {
+        proxy_pass http://cicd.internal:9000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
 # 移行期間用: 旧ドメイン (home-server.internal / *.home-server.internal) から新ドメインへリダイレクト
 # API 等の POST リクエストでもメソッドが維持されるよう 307 を使用
 server{
@@ -179,7 +199,7 @@ server{
 server{
     listen 443 ssl;
     listen 8888;
-    server_name ~^(?<subdomain>dashboard|dashboard-api|jenkins|monitor|grafana|recorder|rundeck|pinpon)\.home-server\.internal$;
+    server_name ~^(?<subdomain>dashboard|dashboard-api|jenkins|monitor|grafana|recorder|rundeck|pinpon|sonarqube)\.home-server\.internal$;
 
     ssl_certificate /etc/nginx/certs/_wildcard.home-server.internal+1.pem;
     ssl_certificate_key /etc/nginx/certs/_wildcard.home-server.internal+1-key.pem;

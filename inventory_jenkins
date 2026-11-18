@@ -21,3 +21,9 @@ batch-server.internal
 
 [pinpon]
 pinpon-server.internal
+
+[cicd]
+cicd.internal
+
+[cicd:vars]
+ansible_user=cicd
