@@ -15,12 +15,7 @@
 10.0.0.15 mac-mini-wifi.internal
 10.0.0.16 deskmini310.internal
 10.0.0.17 wye772wk.internal
-10.0.2.0 9900k.internal
-10.0.2.1 9900k-2.internal
-10.0.2.2 hyper-v.internal
-10.0.2.3 13700k.internal
-10.0.2.4 14500.internal
-10.0.2.5 latitude7390.internal
+10.0.2.0 285k.internal
 10.0.2.6 surface-pro4.internal
 10.0.3.1 home.internal dashboard.home.internal dashboard-api.home.internal jenkins.home.internal monitor.home.internal grafana.home.internal recorder.home.internal rundeck.home.internal pinpon.home.internal sonarqube.home.internal
 10.0.3.1 home-server.internal dashboard.home-server.internal dashboard-api.home-server.internal jenkins.home-server.internal monitor.home-server.internal grafana.home-server.internal recorder.home-server.internal rundeck.home-server.internal pinpon.home-server.internal sonarqube.home-server.internal
