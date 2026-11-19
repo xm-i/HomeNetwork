@@ -88,7 +88,7 @@ sh execute.sh
     ```
 
 - Jenkinsにパイプライン構築
-- jenkinsでデプロイ、ansible実行が出来るよう、HomeServerのknown_hostsにfingerprintを登録していく
+- jenkinsでデプロイ、ansible実行が出来るよう、CICDServerのknown_hostsにfingerprintを登録していく
 
     ```
     su jenkins
@@ -119,12 +119,12 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
 - **ダッシュボード**: 「Nodes Overview」が自動プロビジョニングされ、全サーバーのCPU・メモリ・ディスク・NW状態が一覧確認可能
 - **監視対象ノード**:
   - watch-server (監視サーバー自身)
-  - home.internal (Web / Nginx / Jenkins)
+  - home.internal (Web / Nginx)
   - db-server (PostgreSQL)
   - batch-server
   - dns-server.internal (10.0.0.2 / DNS & DHCP)
   - pinpon-server (10.0.3.6 / Pinpon Web サービス)
-  - cicd.internal (10.0.3.7 / SonarQube)
+  - cicd.internal (10.0.3.7 / SonarQube / Jenkins)
   - aqua-raspi (アクアリウムIoT ※現在アラート対象外)
   - rtx1210 (10.0.0.1 / ルーター / SNMPポーリング & トラップ監視)
   - xs708t (10.0.0.3 / 10G L2スイッチ / ポートトラフィック監視)

@@ -135,6 +135,14 @@
         enabled: yes
         state: started
 
+    - name: Add jenkins backup cron job
+      cron:
+        name: jenkins backup
+        minute: "51"
+        hour: "13"
+        job: "rsync /opt/jenkins/home/backup rsync://{{ ((backup_server | default({})).rsync | default({})).host | default('nas.internal') }}/jenkins_backup -r"
+        state: present
+
   handlers:
     - name: reload sysctl
       command: sysctl --system

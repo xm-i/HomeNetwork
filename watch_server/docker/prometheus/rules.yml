@@ -34,7 +34,7 @@ groups:
       - alert: SystemdServiceDown
         expr: |
           (
-            node_systemd_unit_state{instance="home.internal:9100", name=~"nginx\\.service|jenkins\\.service|back_end_api\\.service|home_automation\\.service", state="active"} == 0
+            node_systemd_unit_state{instance="home.internal:9100", name=~"nginx\\.service|back_end_api\\.service|home_automation\\.service", state="active"} == 0
           )
           or
           (
@@ -58,7 +58,7 @@ groups:
           )
           or
           (
-            node_systemd_unit_state{instance="cicd.internal:9100", name=~"sonarqube\\.service", state="active"} == 0
+            node_systemd_unit_state{instance="cicd.internal:9100", name=~"sonarqube\\.service|jenkins\\.service", state="active"} == 0
           )
         for: 2m
         labels:
