@@ -13,6 +13,7 @@
         name:
           - podman
           - prometheus-node-exporter
+          - rsync
         state: present
         update_cache: yes
 
@@ -77,6 +78,60 @@
     - name: Enable and start sonarqube service
       service:
         name: sonarqube
+        enabled: yes
+        state: started
+
+    - name: Create Jenkins directories
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: /opt/jenkins, mode: "0755" }
+        - { path: /opt/jenkins/home, mode: "0755" }
+        - { path: /opt/jenkins/home/backup, mode: "0755" }
+
+    - name: Ensure Jenkins data directories are owned by UID/GID 1000
+      command: chown -c 1000:1000 /opt/jenkins/home /opt/jenkins/home/backup
+      register: jenkins_chown_result
+      changed_when: jenkins_chown_result.stdout != ""
+
+    - name: Copy Jenkins Containerfile
+      copy:
+        src: ./cicd_server/containers/jenkins/Containerfile
+        dest: /opt/jenkins/Containerfile
+        owner: root
+        group: root
+        mode: "0644"
+      register: jenkins_containerfile_copy
+
+    - name: Check if custom Jenkins container image exists
+      command: podman image exists localhost/jenkins-custom:lts-jdk25
+      register: jenkins_image_exists
+      failed_when: false
+      changed_when: false
+
+    - name: Build custom Jenkins container image
+      command: podman build -t localhost/jenkins-custom:lts-jdk25 -f /opt/jenkins/Containerfile /opt/jenkins
+      when: jenkins_containerfile_copy.changed or jenkins_image_exists.rc != 0
+
+    - name: Copy jenkins systemd service file
+      copy:
+        src: ./cicd_server/services/servicefiles/jenkins.service
+        dest: /etc/systemd/system/jenkins.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: jenkins_service_copy
+
+    - name: Reload systemd daemon if jenkins.service changed
+      systemd:
+        daemon_reload: yes
+      when: jenkins_service_copy.changed
+
+    - name: Enable and start jenkins service
+      service:
+        name: jenkins
         enabled: yes
         state: started
 
