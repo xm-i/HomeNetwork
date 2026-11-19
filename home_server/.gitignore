@@ -1,4 +1,3 @@
-ssh_keys/*
 certs/*
 nginx/certs/*
 !nginx/certs/.gitkeep

@@ -10,8 +10,8 @@ Ansibleを使いネットワークまわりの設定を行う。
 2. ネットワーク設定を行う。
     - IPアドレスは `10.0.0.2/20`（Gateway: `10.0.0.1`、DNS: `1.1.1.1, 8.8.8.8`）で固定しておく。
     - 公開鍵認証で `dns` ユーザーにログインできるようにする。
-        - `dns-server` の `~/.ssh/authorized_keys` に公開鍵を保存する。
-        - Ansibleを実行する側の `./dns_server/ssh_keys/dns_server.key` に秘密鍵を保存する。(OpenSSH形式)
+        - `dns-server` の `~/.ssh/authorized_keys` に全サーバー共通の公開鍵を保存する。
+        - Ansibleを実行する側の `./ssh_keys/id_ed25519` に秘密鍵を保存する。(OpenSSH形式・全サーバー共通)
 
 ## DHCP通知用設定
 
@@ -62,13 +62,13 @@ SlackにDHCP割当通知を行うための設定を行う。
 
 1. ネットワーク設定を行う。
     - 公開鍵認証でpiユーザーにログインできるようにする。
-        - RaspberryPiの/.ssh/authorized_keysに公開鍵を保存する。
-        - Ansibleを実行する側の./aquarium/ssh_keys/aquapi.keyに秘密鍵を保存する。(OpenSSH形式)
+        - RaspberryPiの `~/.ssh/authorized_keys` に全サーバー共通の公開鍵を保存する。
+        - Ansibleを実行する側の `./ssh_keys/id_ed25519` に秘密鍵を保存する。(OpenSSH形式・全サーバー共通)
 
 # KVMゲストたち
 
 1. ゲストを作ってUbuntu20.04をインストールする。
-1. SSH接続出来るよう公開鍵を登録する。
+1. SSH接続出来るよう全サーバー共通の公開鍵を `~/.ssh/authorized_keys` に登録する（ローカルからAnsibleを実行する場合は `./ssh_keys/id_ed25519` に共通秘密鍵を配置する）。
 1. この手順をHomeServer,DbServer,WatchServerの4つ分やっておく
 
 # 実行 (初回のみ。2回目以降はGitHubにpushするとJenkinsが実施してくれる。)

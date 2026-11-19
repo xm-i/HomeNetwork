@@ -1,4 +1,5 @@
 node {
+  def sshCredentialsId = '2ab285bf-f522-4458-beee-b7c0b5b13a8b'
   try{
     stage('CheckOut'){
       checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/southernwind/HomeNetwork']]])
@@ -22,35 +23,35 @@ node {
       // configFileProvider([configFile(fileId: '0deaffda-78a8-4e02-86ad-1d963b074f72', targetLocation: 'watch_server/docker/zabbix-web/env_file')]) {}
     }
     stage('Ansible dns_server'){
-      ansiblePlaybook credentialsId: '5d79e01c-1983-4668-8d8d-22dfa3c7429b', inventory: 'inventory_jenkins', limit: 'dns', playbook: 'playbook.yaml'
+      ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'dns', playbook: 'playbook.yaml'
     }
 
     stage('Ansible home_server'){
-      ansiblePlaybook credentialsId: 'a03bad98-9a5c-4855-b3a9-27e120a90447', inventory: 'inventory_jenkins', limit: 'home', playbook: 'playbook.yaml'
+      ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'home', playbook: 'playbook.yaml'
     }
 
     stage('Ansible aquarium_raspi'){
-      ansiblePlaybook credentialsId: '84abccbc-f317-430f-be13-ea3d41b7e713', inventory: 'inventory_jenkins', limit: 'aquarium', playbook: 'playbook.yaml'
+      ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'aquarium', playbook: 'playbook.yaml'
     }
 
     stage('Ansible db_server'){
-      ansiblePlaybook credentialsId: 'cac5742e-58df-4e7b-9f34-dc04c160aa4b', inventory: 'inventory_jenkins', limit: 'db', playbook: 'playbook.yaml'
+      ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'db', playbook: 'playbook.yaml'
     }
 
     stage('Ansible watch_server'){
-      ansiblePlaybook credentialsId: 'fbab430f-02f2-47f2-82e6-e32b266a3abb', inventory: 'inventory_jenkins', limit: 'watch', playbook: 'playbook.yaml'
+      ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'watch', playbook: 'playbook.yaml'
     }
 
     stage('Ansible batch_server'){
-      ansiblePlaybook credentialsId: '1f4f3d15-c26b-4d2e-86a7-def517f966b3', inventory: 'inventory_jenkins', limit: 'batch', playbook: 'playbook.yaml'
+      ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'batch', playbook: 'playbook.yaml'
     }
 
     stage('Ansible pinpon_server'){
-      ansiblePlaybook credentialsId: '21e3a064-8b91-4e3e-ac42-c82ffd54598f', inventory: 'inventory_jenkins', limit: 'pinpon', playbook: 'playbook.yaml'
+      ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'pinpon', playbook: 'playbook.yaml'
     }
 
     stage('Ansible cicd_server'){
-      ansiblePlaybook credentialsId: '73e7e465-687b-4a3f-b8d5-ab13332355af', inventory: 'inventory_jenkins', limit: 'cicd', playbook: 'playbook.yaml'
+      ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'cicd', playbook: 'playbook.yaml'
     }
 
     stage('Notify Slack'){

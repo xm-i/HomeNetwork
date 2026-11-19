@@ -7,20 +7,38 @@ ansible_user=dns
 [home]
 home.internal
 
+[home:vars]
+ansible_user=home
+
 [aquarium]
 aqua-raspi.internal
+
+[aquarium:vars]
+ansible_user=pi
 
 [db]
 db-server.internal
 
+[db:vars]
+ansible_user=db
+
 [watch]
 watch-server.internal
+
+[watch:vars]
+ansible_user=watch
 
 [batch]
 batch-server.internal
 
+[batch:vars]
+ansible_user=batch
+
 [pinpon]
 pinpon-server.internal
+
+[pinpon:vars]
+ansible_user=pinpon
 
 [cicd]
 cicd.internal
