@@ -1,0 +1,27 @@
+[Unit]
+Description=Tailscale Funnel for Jenkins GitHub Webhook (Podman)
+After=network-online.target jenkins.service
+Wants=network-online.target jenkins.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+TimeoutStartSec=300
+TimeoutStopSec=45
+ExecStartPre=-/usr/bin/podman rm -f tailscale-funnel
+ExecStart=/usr/bin/podman run --rm --name tailscale-funnel \
+  --network=host \
+  --env-file /opt/tailscale/env_file \
+  -e TS_USERSPACE=true \
+  -e TS_ACCEPT_DNS=false \
+  -e TS_AUTH_ONCE=true \
+  -e TS_STATE_DIR=/var/lib/tailscale \
+  -e TS_SERVE_CONFIG=/config/serve.json \
+  -v /opt/tailscale/state:/var/lib/tailscale \
+  -v /opt/tailscale/config:/config:ro \
+  docker.io/tailscale/tailscale:stable
+ExecStop=/usr/bin/podman stop -t 30 tailscale-funnel
+
+[Install]
+WantedBy=multi-user.target

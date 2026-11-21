@@ -1,0 +1,19 @@
+{
+  "TCP": {
+    "443": {
+      "HTTPS": true
+    }
+  },
+  "Web": {
+    "${TS_CERT_DOMAIN}:443": {
+      "Handlers": {
+        "/github-webhook/": {
+          "Proxy": "http://127.0.0.1:8080/github-webhook/"
+        }
+      }
+    }
+  },
+  "AllowFunnel": {
+    "${TS_CERT_DOMAIN}:443": true
+  }
+}

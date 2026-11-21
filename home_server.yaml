@@ -73,15 +73,13 @@
         - restart nginx
     - name: Copy nginx.conf
       copy:
-        src: ./home_server/nginx/sites-available/
-        dest: /etc/nginx/sites-available/
+        src: ./home_server/nginx/sites-available/default
+        dest: /etc/nginx/sites-available/default
+        owner: root
+        group: root
+        mode: "0644"
       notify:
         - restart nginx
-    - name: Create symbolic link
-      file:
-        src: /etc/nginx/sites-available/external
-        dest: /etc/nginx/sites-enabled/external
-        state: link
     - name: Add cron jobs
       cron:
         name: "{{ item.name }}"
@@ -95,12 +93,6 @@
             minute: "44",
             hour: "4",
             job: "curl --location --request POST 'http://dashboard-api.home.internal/api/network-api/post-update-vendor-list-request' --header 'Content-Type: application/json'",
-          }
-        - {
-            name: Dynamic DNS更新Cron,
-            minute: "*",
-            hour: "*",
-            job: 'curl "https://f5.si/update.php?domain={{ddns.domain}}&password={{ddns.token}}"',
           }
     - name: Add back end api service
       copy:

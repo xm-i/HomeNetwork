@@ -143,6 +143,87 @@
         job: "rsync /opt/jenkins/home/backup rsync://{{ ((backup_server | default({})).rsync | default({})).host | default('nas.internal') }}/jenkins_backup -r"
         state: present
 
+    - name: Create Tailscale Funnel directories
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: /opt/tailscale, mode: "0755" }
+        - { path: /opt/tailscale/config, mode: "0755" }
+        - { path: /opt/tailscale/state, mode: "0700" }
+
+    - name: Copy Tailscale Funnel serve.json
+      copy:
+        src: ./cicd_server/containers/tailscale-funnel/serve.json
+        dest: /opt/tailscale/config/serve.json
+        owner: root
+        group: root
+        mode: "0644"
+      register: tailscale_serve_copy
+
+    - name: Configure Tailscale Funnel env_file
+      copy:
+        dest: /opt/tailscale/env_file
+        owner: root
+        group: root
+        mode: "0600"
+        content: |
+          TZ=Asia/Tokyo
+          TS_HOSTNAME={{ (tailscale | default({}, true)).hostname | default('jenkins-webhook', true) }}
+          {% if ((tailscale | default({}, true)).authkey | default('', true)) | length > 0 -%}
+          TS_AUTHKEY={{ tailscale.authkey }}
+          {% endif -%}
+          {% if ((tailscale | default({}, true)).extra_args | default('', true)) | length > 0 -%}
+          TS_EXTRA_ARGS={{ tailscale.extra_args }}
+          {% endif -%}
+      no_log: true
+      register: tailscale_env_copy
+
+    - name: Copy tailscale-funnel systemd service file
+      copy:
+        src: ./cicd_server/services/servicefiles/tailscale-funnel.service
+        dest: /etc/systemd/system/tailscale-funnel.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: tailscale_service_copy
+
+    - name: Reload systemd daemon if tailscale-funnel.service changed
+      systemd:
+        daemon_reload: yes
+      when: tailscale_service_copy.changed
+
+    - name: Check if Tailscale state file exists
+      stat:
+        path: /opt/tailscale/state/tailscaled.state
+      register: tailscale_state_file
+
+    - name: Determine whether Tailscale Funnel is ready to start
+      set_fact:
+        tailscale_funnel_ready: "{{ (((tailscale | default({}, true)).authkey | default('', true)) | length > 0) or tailscale_state_file.stat.exists }}"
+
+    - name: Restart tailscale-funnel service when config changed
+      systemd:
+        name: tailscale-funnel
+        state: restarted
+        daemon_reload: yes
+      when: (tailscale_funnel_ready | bool) and (tailscale_serve_copy.changed or tailscale_env_copy.changed or tailscale_service_copy.changed)
+
+    - name: Enable and start tailscale-funnel service
+      service:
+        name: tailscale-funnel
+        enabled: yes
+        state: started
+      when: tailscale_funnel_ready | bool
+
+    - name: Notice if Tailscale authkey is not yet configured
+      debug:
+        msg: "tailscale.authkey is not configured in group_vars/cicd.yaml and /opt/tailscale/state/tailscaled.state does not exist; skipping tailscale-funnel startup."
+      when: not (tailscale_funnel_ready | bool)
+
   handlers:
     - name: reload sysctl
       command: sysctl --system

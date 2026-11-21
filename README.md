@@ -99,6 +99,42 @@ sh execute.sh
     ssh ...全ホストやる
     ```
 
+# GitHub Webhook 連携 (Tailscale Funnel)
+
+`cicd.internal` 上の `tailscale-funnel.service`（Podman コンテナ）により、`/github-webhook/` のみを HTTPS で外部公開し、`http://127.0.0.1:8080/github-webhook/` へ転送します。RTX1210 のポート開放は不要で、Jenkins 管理画面は外部非公開のまま複数リポジトリで単一の Webhook URL を共用できます。
+
+### 1. Tailscale 側の事前設定
+1. Tailscale 管理画面の **DNS** で **MagicDNS** と **HTTPS Certificates** を有効化します。
+2. **Access Controls** で Funnel が許可されていることを確認します（デフォルト ACL で許可済み）。
+3. **Settings → Keys → Generate auth key** で **Reusable** な Auth Key を発行します（必要に応じて Pre-approved を有効化）。
+
+### 2. `group_vars/cicd.yaml` に Auth Key を設定
+ローカルの `group_vars/cicd.yaml` および Jenkins の Managed Files（`08db25be-824e-4efb-8883-f9a0c9a39827`）に以下を追記してからデプロイします：
+
+```yaml
+tailscale:
+  authkey: "tskey-auth-xxxxxxxxxxxx"
+  # hostname: "jenkins-webhook"  # 省略時は jenkins-webhook
+```
+
+※ 初回起動後、Tailscale 管理画面の **Machines** で `jenkins-webhook` ノードの **Disable key expiry** を有効化しておくと 180 日ごとの鍵失効を防げます。
+
+### 3. Jenkins 側の設定
+- GitHub Plugin を利用します。セキュリティのため **Manage Jenkins → System → GitHub → Advanced → Shared secret** に Webhook Secret を登録してください（GitHub 側の Secret と一致させます）。
+- キックしたい各ジョブ（`HomeNetwork` や別リポジトリのジョブ）の設定で **「GitHub hook trigger for GITScm polling」** を有効化してください（Jenkins の CSRF 保護は無効化不要です）。
+
+### 4. GitHub 各リポジトリの Webhook 設定
+リポジトリの **Settings → Webhooks → Add webhook** から以下を設定します：
+- **Payload URL**: `https://jenkins-webhook.<tailnet>.ts.net/github-webhook/`（末尾の `/` 必須。正確なホスト名は Tailscale 管理画面の Machines で確認）
+- **Content type**: `application/json`
+- **Secret**: Jenkins 側に設定した Shared secret と同じ値
+- **Which events**: `Just the push event`
+
+別リポジトリからも同じ Payload URL を指定すれば、Jenkins の GitHub Plugin がリポジトリ URL に基づき該当ジョブへ自動振り分けします。
+
+### 5. （任意）旧設定の片付け
+Jenkins Managed Files の旧 `external`（`007d1ea8-f543-45a2-b446-b52b3af1a3c5`）や `group_vars/home.yaml` の `ddns` 項目は不要になったため任意で削除できます。
+
 # KVM Hostのネットワーク設定
 
 - ゲストのネットワークをブリッジする必要があるので以下を実行する。
@@ -124,7 +160,7 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
   - batch-server
   - dns-server.internal (10.0.0.2 / DNS & DHCP)
   - pinpon-server (10.0.3.6 / Pinpon Web サービス)
-  - cicd.internal (10.0.3.7 / SonarQube / Jenkins)
+  - cicd.internal (10.0.3.7 / SonarQube / Jenkins / Tailscale Funnel)
   - aqua-raspi (アクアリウムIoT ※現在アラート対象外)
   - rtx1210 (10.0.0.1 / ルーター / SNMPポーリング & トラップ監視)
   - xs708t (10.0.0.3 / 10G L2スイッチ / ポートトラフィック監視)
@@ -139,7 +175,7 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
 - **通知先**: `watch_server/docker/env_file` の `ALERT_WEBHOOK_URL`（未設定時は `SNMP_TRAP_WEBHOOK_URL` にフォールバック）
 - **主なアラートルール**:
   - `HostDown`: `node` ジョブの `up == 0` が 3 分継続（`aqua-raspi.internal` 除外）
-  - `SystemdServiceDown`: `nginx` / `jenkins` / `back_end_api` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` / `sonarqube` の停止（2 分継続）
+  - `SystemdServiceDown`: `nginx` / `jenkins` / `tailscale-funnel` / `back_end_api` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` / `sonarqube` の停止（2 分継続）
   - `HttpsEndpointDown`: Nginx 配下全 `*.home.internal` の HTTPS プローブ失敗（3 分継続）
   - `SslCertificateExpiringSoon`: TLS 証明書の残り有効期限が 30 日未満
   - `BlackboxExporterDown` / `RecorderExporterDown`: 各エクスポーターの取得失敗（3 分継続）
