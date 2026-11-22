@@ -13,6 +13,35 @@ Ansibleを使いネットワークまわりの設定を行う。
         - `dns-server` の `~/.ssh/authorized_keys` に全サーバー共通の公開鍵を保存する。
         - Ansibleを実行する側の `./ssh_keys/id_ed25519` に秘密鍵を保存する。(OpenSSH形式・全サーバー共通)
 
+## DNS Filter Server (dnsfilter.internal / 現行実装: AdGuard Home)
+
+1. KVMゲストを作成し、Ubuntuをインストールする（ユーザー名: `dnsfilter`、ホスト名: `dnsfilter`）。
+2. ネットワーク設定を行う。
+    - IPアドレスは `10.0.3.8/20`（Gateway: `10.0.0.1`、DNS: `10.0.0.2`）で固定しておく。
+    - 公開鍵認証で `dnsfilter` ユーザーにログインできるようにする（全サーバー共通の公開鍵を `~/.ssh/authorized_keys` に保存）。
+3. （任意）NAS (`nas.internal`) 側に設定バックアップ用の rsync モジュール `dnsfilter_backup` を作成する。
+4. （再構築時など）MACアドレスが変わった場合は `dns_server/dnsmasq/dnsmasq.conf` の `# DNSFilter-Server` の `dhcp-host` 行を更新する。
+
+### DNS 振り分け・運用・一時解除
+
+- **DNS 配り分けルール (`dnsmasq.conf`)**:
+  - `dhcp-host` に登録済みの固定IP端末 (`known`): `10.0.0.2`（`dnsmasq` 直結／広告ブロックなし）
+  - `dhcp-host` 未登録の動的DHCP端末 (`!known`: スマホ等) および `set:dnsfilter` を付与した端末: `10.0.3.8`（DNS フィルタ／広告ブロックあり）
+  - `.internal` ドメインおよびプライベート逆引き (`10.x.x.x`) は `10.0.0.2` へフォワードされます。
+- **280blocker の自動更新**:
+  - `update_280blocker.py` が毎日 05:15 に当月（未公開時は前月）の `280blocker_domain_ag_YYYYMM.txt` を取得し、変更時のみ反映します。
+- **設定の永続化 (方式 X)**:
+  - 現行バックエンド（AdGuard Home）の `dnsfilter_server/config/AdGuardHome.yaml` は初回のみ配置 (`force: no`) されるため、Web UI 上で追加したホワイトリスト等の変更は Ansible で上書きされません。設定ディレクトリ `/opt/dnsfilter/conf/` は毎日 13:45 に NAS へ `rsync` バックアップされます。
+- **広告ブロックの手軽な一時解除**:
+  - **Web UI**: `https://dnsfilter.home.internal/` の「保護を無効化」から時間指定（1分 / 10分 / 1時間等）で一時停止できます（自動復帰、`blocked_response_ttl: 10` 秒のため解除後すぐ効きます）。
+  - **ワンタップAPI（iOS ショートカット等向け）**: 以下のリクエストを投げると 5 分間（`300000` ms）だけ停止し、自動で再開します。
+    ```text
+    POST https://dnsfilter.home.internal/control/protection
+    Content-Type: application/json
+    Body: {"enabled": false, "duration": 300000}
+    ```
+    ※ 端末に mkcert CA を入れていない場合は `http://dnsfilter.internal:3000/control/protection` を使用してください。また、Web UI で認証パスワードを設定した場合は Basic 認証ヘッダを付与してください。
+
 ## DHCP通知用設定
 
 SlackにDHCP割当通知を行うための設定を行う。
@@ -161,6 +190,7 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
   - dns-server.internal (10.0.0.2 / DNS & DHCP)
   - pinpon-server (10.0.3.6 / Pinpon Web サービス)
   - cicd.internal (10.0.3.7 / SonarQube / Jenkins / Tailscale Funnel)
+  - dnsfilter.internal (10.0.3.8 / DNS フィルタ・AdGuard Home)
   - aqua-raspi (アクアリウムIoT ※現在アラート対象外)
   - rtx1210 (10.0.0.1 / ルーター / SNMPポーリング & トラップ監視)
   - xs708t (10.0.0.3 / 10G L2スイッチ / ポートトラフィック監視)
@@ -175,7 +205,7 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
 - **通知先**: `watch_server/docker/env_file` の `ALERT_WEBHOOK_URL`（未設定時は `SNMP_TRAP_WEBHOOK_URL` にフォールバック）
 - **主なアラートルール**:
   - `HostDown`: `node` ジョブの `up == 0` が 3 分継続（`aqua-raspi.internal` 除外）
-  - `SystemdServiceDown`: `nginx` / `jenkins` / `tailscale-funnel` / `back_end_api` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` / `sonarqube` の停止（2 分継続）
+  - `SystemdServiceDown`: `nginx` / `jenkins` / `tailscale-funnel` / `back_end_api` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` / `sonarqube` / `dnsfilter` の停止（2 分継続）
   - `HttpsEndpointDown`: Nginx 配下全 `*.home.internal` の HTTPS プローブ失敗（3 分継続）
   - `SslCertificateExpiringSoon`: TLS 証明書の残り有効期限が 30 日未満
   - `BlackboxExporterDown` / `RecorderExporterDown`: 各エクスポーターの取得失敗（3 分継続）

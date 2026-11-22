@@ -1,0 +1,133 @@
+- hosts: dnsfilter
+  become: yes
+  remote_user: dnsfilter
+  gather_facts: no
+
+  tasks:
+    - name: Set timezone
+      timezone:
+        name: Asia/Tokyo
+
+    - name: Set hostname
+      hostname:
+        name: dnsfilter
+
+    - name: Disable DNSStubListener in systemd-resolved (to free port 53 for DNS filter)
+      lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: '^#?DNSStubListener='
+        line: 'DNSStubListener=no'
+      notify:
+        - restart systemd-resolved
+
+    - name: Link /etc/resolv.conf to systemd upstream resolv.conf
+      file:
+        src: /run/systemd/resolve/resolv.conf
+        dest: /etc/resolv.conf
+        state: link
+        force: yes
+
+    - name: Flush handlers to apply systemd-resolved changes before package install
+      meta: flush_handlers
+
+    - name: Install apt packages
+      apt:
+        name:
+          - podman
+          - prometheus-node-exporter
+          - python3
+          - rsync
+        state: present
+        update_cache: yes
+
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
+
+    - name: Create DNS filter directories
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: /opt/dnsfilter, mode: "0755" }
+        - { path: /opt/dnsfilter/conf, mode: "0755" }
+        - { path: /opt/dnsfilter/work, mode: "0755" }
+        - { path: /opt/dnsfilter/work/userfilters, mode: "0755" }
+        - { path: /opt/dnsfilter/scripts, mode: "0755" }
+
+    - name: Copy 280blocker update script
+      copy:
+        src: ./dnsfilter_server/scripts/update_280blocker.py
+        dest: /opt/dnsfilter/scripts/update_280blocker.py
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Initialize 280blocker filter file if missing
+      command: python3 /opt/dnsfilter/scripts/update_280blocker.py --init
+      args:
+        creates: /opt/dnsfilter/work/userfilters/280blocker.txt
+
+    - name: Seed initial AdGuardHome.yaml if missing
+      copy:
+        src: ./dnsfilter_server/config/AdGuardHome.yaml
+        dest: /opt/dnsfilter/conf/AdGuardHome.yaml
+        owner: root
+        group: root
+        mode: "0600"
+        force: no
+
+    - name: Copy dnsfilter systemd service file
+      copy:
+        src: ./dnsfilter_server/services/servicefiles/dnsfilter.service
+        dest: /etc/systemd/system/dnsfilter.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: dnsfilter_service_copy
+
+    - name: Reload systemd daemon if dnsfilter.service changed
+      systemd:
+        daemon_reload: yes
+      when: dnsfilter_service_copy.changed
+
+    - name: Enable and start dnsfilter service
+      service:
+        name: dnsfilter
+        enabled: yes
+        state: started
+      register: dnsfilter_started
+
+    - name: Restart dnsfilter service if unit file changed
+      systemd:
+        name: dnsfilter
+        state: restarted
+        daemon_reload: yes
+      when: dnsfilter_service_copy.changed and not dnsfilter_started.changed
+
+    - name: Add daily 280blocker update cron job
+      cron:
+        name: 280blocker filter update
+        minute: "15"
+        hour: "5"
+        job: "python3 /opt/dnsfilter/scripts/update_280blocker.py"
+        state: present
+
+    - name: Add DNS filter config backup cron job
+      cron:
+        name: dnsfilter config backup
+        minute: "45"
+        hour: "13"
+        job: "rsync -a /opt/dnsfilter/conf/ rsync://{{ ((backup_server | default({})).rsync | default({})).host | default('nas.internal') }}/dnsfilter_backup/"
+        state: present
+
+  handlers:
+    - name: restart systemd-resolved
+      service:
+        name: systemd-resolved
+        state: restarted

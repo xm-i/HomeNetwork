@@ -18,11 +18,12 @@
 10.0.2.0 285k.internal
 10.0.2.3 13700k.internal
 10.0.2.6 surface-pro4.internal
-10.0.3.1 home.internal dashboard.home.internal dashboard-api.home.internal jenkins.home.internal monitor.home.internal grafana.home.internal recorder.home.internal rundeck.home.internal pinpon.home.internal sonarqube.home.internal
-10.0.3.1 home-server.internal dashboard.home-server.internal dashboard-api.home-server.internal jenkins.home-server.internal monitor.home-server.internal grafana.home-server.internal recorder.home-server.internal rundeck.home-server.internal pinpon.home-server.internal sonarqube.home-server.internal
+10.0.3.1 home.internal dashboard.home.internal dashboard-api.home.internal jenkins.home.internal monitor.home.internal grafana.home.internal recorder.home.internal rundeck.home.internal pinpon.home.internal sonarqube.home.internal dnsfilter.home.internal
+10.0.3.1 home-server.internal dashboard.home-server.internal dashboard-api.home-server.internal jenkins.home-server.internal monitor.home-server.internal grafana.home-server.internal recorder.home-server.internal rundeck.home-server.internal pinpon.home-server.internal sonarqube.home-server.internal dnsfilter.home-server.internal
 10.0.3.2 db-server.internal
 10.0.3.3 watch-server.internal
 10.0.3.4 game-server0.internal
 10.0.3.5 batch-server.internal
 10.0.3.6 pinpon-server.internal
 10.0.3.7 cicd.internal
+10.0.3.8 dnsfilter.internal

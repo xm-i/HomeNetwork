@@ -45,3 +45,9 @@ cicd.internal
 
 [cicd:vars]
 ansible_user=cicd
+
+[dnsfilter]
+dnsfilter.internal
+
+[dnsfilter:vars]
+ansible_user=dnsfilter

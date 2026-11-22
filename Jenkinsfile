@@ -25,6 +25,10 @@ node {
       ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'dns', playbook: 'playbook.yaml'
     }
 
+    stage('Ansible dnsfilter_server'){
+      ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'dnsfilter', playbook: 'playbook.yaml'
+    }
+
     stage('Ansible home_server'){
       ansiblePlaybook credentialsId: sshCredentialsId, inventory: 'inventory_jenkins', limit: 'home', playbook: 'playbook.yaml'
     }

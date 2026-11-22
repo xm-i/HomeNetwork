@@ -46,5 +46,11 @@ cicd.internal
 [cicd:vars]
 ansible_user=cicd
 
+[dnsfilter]
+dnsfilter.internal
+
+[dnsfilter:vars]
+ansible_user=dnsfilter
+
 [all:vars]
 ansible_ssh_private_key_file=./ssh_keys/id_ed25519

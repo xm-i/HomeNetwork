@@ -1,0 +1,115 @@
+http:
+  address: 0.0.0.0:3000
+  session_ttl: 720h
+users: []
+auth_attempts: 5
+block_auth_min: 15
+http_proxy: ""
+language: ja
+theme: auto
+dns:
+  bind_hosts:
+    - 0.0.0.0
+  port: 53
+  anonymize_client_ip: false
+  ratelimit: 0
+  ratelimit_subnet_len_ipv4: 24
+  ratelimit_subnet_len_ipv6: 56
+  ratelimit_whitelist: []
+  refuse_any: true
+  upstream_dns:
+    - '[/internal/]10.0.0.2'
+    - '[//]10.0.0.2'
+    - https://dns.cloudflare.com/dns-query
+    - https://dns.google/dns-query
+  upstream_dns_file: ""
+  bootstrap_dns:
+    - 1.1.1.1
+    - 8.8.8.8
+  fallback_dns:
+    - 1.1.1.1
+    - 8.8.8.8
+  upstream_mode: load_balance
+  fastest_timeout: 1s
+  allowed_clients: []
+  disallowed_clients: []
+  blocked_hosts:
+    - version.bind
+    - id.server
+    - hostname.bind
+  trusted_proxies:
+    - 127.0.0.0/8
+    - ::1/128
+    - 10.0.3.1/32
+  cache_size: 4194304
+  cache_ttl_min: 0
+  cache_ttl_max: 0
+  cache_optimistic: false
+  bogus_nxdomain: []
+  aaaa_disabled: false
+  enable_dnssec: false
+  edns_client_subnet:
+    custom_ip: ""
+    enabled: false
+    use_custom: false
+  max_goroutines: 300
+  handle_ddr: true
+  ipset: []
+  ipset_file: ""
+  bootstrap_prefer_ipv6: false
+  upstream_timeout: 10s
+  private_networks: []
+  use_private_ptr_resolvers: true
+  local_ptr_upstreams:
+    - 10.0.0.2
+  use_dns64: false
+  dns64_prefixes: []
+  serve_http3: false
+  use_http3_upstreams: false
+  serve_plain_dns: true
+  hostsfile_enabled: true
+filtering:
+  blocking_ipv4: ""
+  blocking_ipv6: ""
+  blocked_services:
+    schedule:
+      time_zone: Asia/Tokyo
+    ids: []
+  protection_disabled_until: null
+  safe_search:
+    enabled: false
+    bing: true
+    duckduckgo: true
+    ecosia: true
+    google: true
+    pixabay: true
+    yandex: true
+    youtube: true
+  blocking_mode: default
+  parental_block_host: family-block.dns.adguard.com
+  safebrowsing_block_host: standard-block.dns.adguard.com
+  rewrites: []
+  safe_fs_patterns:
+    - /opt/adguardhome/work/userfilters/*
+  safebrowsing_cache_size: 1048576
+  safebrowsing_enabled: false
+  parental_enabled: false
+  safesearch_enabled: false
+  filters_update_interval: 24
+  protection_enabled: true
+  filtering_enabled: true
+  parental_cache_size: 1048576
+  safesearch_cache_size: 1048576
+  blocked_response_ttl: 10
+filters:
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
+    name: AdGuard DNS filter
+    id: 1
+  - enabled: true
+    url: /opt/adguardhome/work/userfilters/280blocker.txt
+    name: 280blocker (AdGuard format)
+    id: 2
+whitelist_filters: []
+user_rules: []
+schema_version: 29
