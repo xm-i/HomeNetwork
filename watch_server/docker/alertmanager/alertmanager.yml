@@ -19,7 +19,7 @@ receivers:
   - name: 'slack-notifications'
     slack_configs:
       - api_url_file: '/tmp/slack_webhook_url'
-        channel: '#alerts'
+        channel: '#エラー通知'
         send_resolved: true
         username: 'Alertmanager'
         icon_emoji: '{{ if eq .Status "firing" }}:rotating_light:{{ else }}:white_check_mark:{{ end }}'
