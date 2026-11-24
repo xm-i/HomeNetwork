@@ -6,7 +6,7 @@ Ansibleを使いネットワークまわりの設定を行う。
 
 ## DNS兼DHCP Server (dns-server)
 
-1. KVMゲストを作成し、Ubuntuをインストールする（ユーザー名: `dns`、ホスト名: `dns-server`）。
+1. Proxmox VMを作成し、Ubuntuをインストールする（ユーザー名: `dns`、ホスト名: `dns-server`）。
 2. ネットワーク設定を行う。
     - IPアドレスは `10.0.0.2/20`（Gateway: `10.0.0.1`、DNS: `1.1.1.1, 8.8.8.8`）で固定しておく。
     - 公開鍵認証で `dns` ユーザーにログインできるようにする。
@@ -15,7 +15,7 @@ Ansibleを使いネットワークまわりの設定を行う。
 
 ## DNS Filter Server (dnsfilter.internal / 現行実装: AdGuard Home)
 
-1. KVMゲストを作成し、Ubuntuをインストールする（ユーザー名: `dnsfilter`、ホスト名: `dnsfilter`）。
+1. Proxmox VMを作成し、Ubuntuをインストールする（ユーザー名: `dnsfilter`、ホスト名: `dnsfilter`）。
 2. ネットワーク設定を行う。
     - IPアドレスは `10.0.3.8/20`（Gateway: `10.0.0.1`、DNS: `10.0.0.2`）で固定しておく。
     - 公開鍵認証で `dnsfilter` ユーザーにログインできるようにする（全サーバー共通の公開鍵を `~/.ssh/authorized_keys` に保存）。
@@ -94,7 +94,7 @@ SlackにDHCP割当通知を行うための設定を行う。
         - RaspberryPiの `~/.ssh/authorized_keys` に全サーバー共通の公開鍵を保存する。
         - Ansibleを実行する側の `./ssh_keys/id_ed25519` に秘密鍵を保存する。(OpenSSH形式・全サーバー共通)
 
-# KVMゲストたち
+# Proxmox VMたち
 
 1. ゲストを作ってUbuntu20.04をインストールする。
 1. SSH接続出来るよう全サーバー共通の公開鍵を `~/.ssh/authorized_keys` に登録する（ローカルからAnsibleを実行する場合は `./ssh_keys/id_ed25519` に共通秘密鍵を配置する）。
@@ -164,25 +164,22 @@ tailscale:
 ### 5. （任意）旧設定の片付け
 Jenkins Managed Files の旧 `external`（`007d1ea8-f543-45a2-b446-b52b3af1a3c5`）や `group_vars/home.yaml` の `ddns` 項目は不要になったため任意で削除できます。
 
-# KVM Hostのネットワーク設定
+# Proxmox VE ホスト (`proxmox.internal` / `10.0.0.7`)
 
-- ゲストのネットワークをブリッジする必要があるので以下を実行する。
+- 仮想化基盤は **Proxmox VE 9.2**（ASRock DeskMini B760 / ブリッジ `vmbr0` / IP: `10.0.0.7/20`, GW: `10.0.0.1`, DNS: `10.0.0.2`）。
+- Web UI: `https://pve.home.internal/`（Nginx 経由）または `https://10.0.0.7:8006/`。
+- `HomeServer`（VMID `101`）へ電力監視用 FTDI USB UART（`0403:6001`）を USB パススルー接続。
+- 監視のため Proxmox ホストに `prometheus-node-exporter` を導入しています（`apt update && apt install -y prometheus-node-exporter`）。
 
-    ```
-    nmcli con add type bridge ifname for-kvm0
-    nmcli con modify bridge-for-kvm0 bridge.stp no
-    nmcli con modify bridge-for-kvm0 ipv4.method manual ipv4.address "10.0.0.7/20" ipv4.gateway "10.0.0.1" ipv4.dns "10.0.0.2"
-    nmcli con add type bridge-slave ifname enp2s0 master bridge-for-kvm0
-    nmcli con del netplan-enp2s0
-    ```
 # 監視サーバー (WatchServer)
 
 Prometheus + Grafana + Node Exporter によるインフラメトリクス監視。
 
-- **URL**: `http://monitor.home.internal/` (または `http://grafana.home.internal/`)
+- **URL**: `https://monitor.home.internal/` (または `https://grafana.home.internal/`)
 - **初期アカウント**: `admin` / `admin`
 - **ダッシュボード**: 「Nodes Overview」が自動プロビジョニングされ、全サーバーのCPU・メモリ・ディスク・NW状態が一覧確認可能
 - **監視対象ノード**:
+  - proxmox.internal (10.0.0.7 / Proxmox VE ハイパーバイザ)
   - watch-server (監視サーバー自身)
   - home.internal (Web / Nginx)
   - db-server (PostgreSQL)

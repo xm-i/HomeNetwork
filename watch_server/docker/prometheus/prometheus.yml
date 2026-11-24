@@ -28,6 +28,7 @@ scrape_configs:
           - 'cicd.internal:9100'
           - 'dnsfilter.internal:9100'
           - 'aqua-raspi.internal:9100'
+          - 'proxmox.internal:9100'
           # - 'recorder.internal:9100'
         labels:
           environment: 'production'
@@ -138,6 +139,7 @@ scrape_configs:
           - 'https://pinpon.home.internal/'
           - 'https://sonarqube.home.internal/'
           - 'https://dnsfilter.home.internal/'
+          - 'https://pve.home.internal/'
         labels:
           environment: 'production'
     relabel_configs:

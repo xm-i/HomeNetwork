@@ -26,7 +26,7 @@ HomeNetwork 環境で障害・アラート・エラー・疎通不良などの�
   - ファイルの作成・編集・追記・削除・リダイレクト（`>`, `>>`, `tee`, `sed -i`, `rm`, `mv`, `cp`, `touch`, `mkdir`, `chmod`, `chown` 等）
   - サービス・デーモンの起動 / 停止 / 再起動 / 設定リロード（`systemctl start/stop/restart/reload/enable/disable` 等）
   - コンテナの起動 / 停止 / 再作成 / 削除 / 状態を変更するコマンド実行（`docker compose up/down/restart`, `podman stop/rm/restart` 等）
-  - VM 操作（`virsh start/shutdown/reboot/destroy` 等）
+  - VM 操作（`qm start/shutdown/reboot/stop` 等）
   - データベースの更新・削除・スキーマ変更（`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `TRUNCATE` 等）
   - パッケージ操作（`apt update/install/upgrade/remove` 等）
   - 状態を変更する HTTP リクエスト（`POST`, `PUT`, `PATCH`, `DELETE` 等。例: AdGuard Home の保護切り替え API など）
@@ -51,7 +51,7 @@ HomeNetwork 環境で障害・アラート・エラー・疎通不良などの�
 
 ## 2. SSH 接続ルール（Windows / PowerShell）
 
-- **接続先指定**: 原則として `~/.ssh/config` のホストエイリアスを使用する（例: `home`, `db`, `watch`, `batch`, `pinpon`, `cicd`, `dns`, `dnsfilter`, `aquarium`, `kvm`, `recorder`）。
+- **接続先指定**: 原則として `~/.ssh/config` のホストエイリアスを使用する（例: `home`, `db`, `watch`, `batch`, `pinpon`, `cicd`, `dns`, `dnsfilter`, `aquarium`, `proxmox`, `recorder`）。
 - **フォールバック**: DNS 障害などで名前解決できない場合やエイリアスが使えない場合は、`inventory` または [infrastructure-map.md](./references/infrastructure-map.md) の IP アドレスと `./ssh_keys/id_ed25519` を指定する。
   - 例: `ssh -i ./ssh_keys/id_ed25519 -o BatchMode=yes -o ConnectTimeout=5 dns@10.0.0.2 'systemctl status dnsmasq --no-pager'`
 - **安全な実行オプション**:
@@ -124,9 +124,9 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 db 'systemctl status postgresql --no-pa
 ssh -o BatchMode=yes -o ConnectTimeout=5 db 'sudo -n -u postgres psql -c "SELECT pid, usename, datname, state, wait_event_type, left(query, 80) FROM pg_stat_activity WHERE state != '\''idle'\'';"'
 ```
 
-#### KVM ゲスト無応答時 (`kvm`)
+#### Proxmox VM 無応答時 (`proxmox` / `10.0.0.7`)
 ```powershell
-ssh -o BatchMode=yes -o ConnectTimeout=5 kvm 'sudo -n virsh list --all'
+ssh -o BatchMode=yes -o ConnectTimeout=5 root@10.0.0.7 'qm list'
 ```
 
 ### Step 4: 調査結果の整理と報告
@@ -150,7 +150,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 kvm 'sudo -n virsh list --all'
 | 操作分類 | Read-Only（確認なしで実施可） | 状態変更（必ず事前許可が必要） |
 | :--- | :--- | :--- |
 | **情報・ログ参照** | `cat`, `head`, `tail`, `grep`, `less`, `ls`, `stat`, `journalctl`, `docker/podman logs` | リダイレクト (`>`, `>>`), `tee`, 一時ファイル作成 |
-| **プロセス・サービス** | `ps`, `top -bn1`, `free`, `df`, `uptime`, `systemctl status/is-active`, `virsh list` | `systemctl start/stop/restart/reload`, `kill`, `virsh start/reboot` |
+| **プロセス・サービス** | `ps`, `top -bn1`, `free`, `df`, `uptime`, `systemctl status/is-active`, `qm list` | `systemctl start/stop/restart/reload`, `kill`, `qm start/reboot` |
 | **コンテナ** | `docker/podman ps`, `inspect`, `logs`, `stats --no-stream` | `up`, `down`, `restart`, `stop`, `rm`, `exec` での変更作業 |
 | **NW・HTTP確認** | `ss`, `ip addr/route`, `ping -c 3`, `dig`, `curl -I` / `GET`（参照 API のみ） | `POST/PUT/DELETE` API 実行、FW/ルーティング変更 |
 | **DB** | `SELECT`（状態参照・件数確認）, `\l`, `\dt`, `pg_stat_activity` | `INSERT`, `UPDATE`, `DELETE`, `VACUUM`, `ALTER`, DB 再起動 |
