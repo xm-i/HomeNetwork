@@ -114,6 +114,7 @@
     - name: Build custom Jenkins container image
       command: podman build -t localhost/jenkins-custom:lts-jdk25 -f /opt/jenkins/Containerfile /opt/jenkins
       when: jenkins_containerfile_copy.changed or jenkins_image_exists.rc != 0
+      register: jenkins_image_build
 
     - name: Copy jenkins systemd service file
       copy:
@@ -134,6 +135,13 @@
         name: jenkins
         enabled: yes
         state: started
+      register: jenkins_service_started
+
+    # HomeNetwork の Jenkins パイプライン自身がこのコンテナ内で動作するため、
+    # 同期再起動するとジョブ完了前に自プロセスが停止する。パイプライン終了後に反映させるため遅延再起動する。
+    - name: Schedule delayed restart of jenkins service if image or unit changed
+      command: systemd-run --on-active=15s systemctl restart jenkins
+      when: (jenkins_image_build.changed or jenkins_service_copy.changed) and not jenkins_service_started.changed
 
     - name: Add jenkins backup cron job
       cron:
