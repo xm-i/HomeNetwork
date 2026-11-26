@@ -49,8 +49,8 @@ class State:
         self.mirakurun_up = True
         self.mirakurun_down_since = None
         self.active_conflicts = 0
-        self.faulty_tuners = set()
-        self.tuner_fault_since = {}
+        self.tuners_available = True
+        self.all_tuners_fault_since = None
         self.low_storages = set()
         self.last_drops_total = 0
         self.alert_cooldowns = {}
@@ -82,32 +82,86 @@ def send_webhook(title, message, color_emoji=":warning:"):
     except Exception as e:
         logger.error("Failed to send webhook notification: %s", e)
 
-def _check_service_status(service_name, service_url, is_up, up_attr, down_since_attr, now):
-    """Track service downtime duration and notify only when down continuously past the threshold."""
-    was_up = getattr(state, up_attr)
+def _format_duration(seconds):
+    """Format a duration in seconds as minutes when >= 60s, otherwise seconds."""
+    minutes = seconds // 60
+    return f"{minutes}分" if minutes > 0 else f"{seconds}秒"
+
+def _is_tuner_unavailable(tuner):
+    """Return True if a Mirakurun tuner is faulty or unavailable."""
+    return tuner.get("isFault", False) or not tuner.get("isAvailable", True)
+
+def _tuner_name(tuner):
+    """Return a display name for a Mirakurun tuner."""
+    return tuner.get("name") or f"Tuner{tuner.get('index')}"
+
+def _update_debounced_fault(is_healthy, healthy_attr, down_since_attr, threshold_seconds, now):
+    """Update continuous fault timer and return 'fault', 'recovered', or None."""
+    was_healthy = getattr(state, healthy_attr)
     down_since = getattr(state, down_since_attr)
-    if not is_up:
+    if not is_healthy:
         if down_since is None:
             setattr(state, down_since_attr, now)
             down_since = now
-        if was_up and (now - down_since) >= SERVICE_DOWN_THRESHOLD_SECONDS:
-            setattr(state, up_attr, False)
-            minutes = SERVICE_DOWN_THRESHOLD_SECONDS // 60
-            time_desc = f"{minutes}分" if minutes > 0 else f"{SERVICE_DOWN_THRESHOLD_SECONDS}秒"
-            send_webhook(
-                f"{service_name} 接続異常",
-                f"{service_name} ({service_url}) への接続失敗が **{time_desc}以上継続** しています。",
-                ":rotating_light:"
-            )
-    else:
-        setattr(state, down_since_attr, None)
-        if not was_up:
-            setattr(state, up_attr, True)
-            send_webhook(
-                f"{service_name} 接続復旧",
-                f"{service_name} ({service_url}) との接続が復旧しました。",
-                ":white_check_mark:"
-            )
+        if was_healthy and (now - down_since) >= threshold_seconds:
+            setattr(state, healthy_attr, False)
+            return "fault"
+        return None
+
+    setattr(state, down_since_attr, None)
+    if not was_healthy:
+        setattr(state, healthy_attr, True)
+        return "recovered"
+    return None
+
+def _check_service_status(service_name, service_url, is_up, up_attr, down_since_attr, now):
+    """Track service downtime duration and notify only when down continuously past the threshold."""
+    transition = _update_debounced_fault(is_up, up_attr, down_since_attr, SERVICE_DOWN_THRESHOLD_SECONDS, now)
+    if transition == "fault":
+        time_desc = _format_duration(SERVICE_DOWN_THRESHOLD_SECONDS)
+        send_webhook(
+            f"{service_name} 接続異常",
+            f"{service_name} ({service_url}) への接続失敗が **{time_desc}以上継続** しています。",
+            ":rotating_light:"
+        )
+    elif transition == "recovered":
+        send_webhook(
+            f"{service_name} 接続復旧",
+            f"{service_name} ({service_url}) との接続が復旧しました。",
+            ":white_check_mark:"
+        )
+
+def _check_tuner_status(mirakurun_data, now):
+    """Notify only when all tuners stay unavailable continuously past the threshold, and on recovery."""
+    # Mirakurun が正常に応答し、チューナー情報が取得できた場合のみ判定
+    # （一時的なスクレイプ失敗や空レスポンスで状態がクリアされるのを防止）
+    tuners = mirakurun_data.get("tuners", [])
+    if not (mirakurun_data.get("up", False) and tuners):
+        return
+
+    available_tuners = [t for t in tuners if not _is_tuner_unavailable(t)]
+    transition = _update_debounced_fault(
+        len(available_tuners) > 0,
+        "tuners_available",
+        "all_tuners_fault_since",
+        TUNER_FAULT_THRESHOLD_SECONDS,
+        now,
+    )
+    if transition == "fault":
+        time_desc = _format_duration(TUNER_FAULT_THRESHOLD_SECONDS)
+        tuner_names = sorted({_tuner_name(t) for t in tuners})
+        send_webhook(
+            "チューナー障害検知",
+            f"すべてのチューナー（{len(tuners)}台）が **{time_desc}以上継続** して利用不可または故障状態です: `{', '.join(tuner_names)}`",
+            ":rotating_light:"
+        )
+    elif transition == "recovered":
+        avail_names = sorted({_tuner_name(t) for t in available_tuners})
+        send_webhook(
+            "チューナー復旧検知",
+            f"利用可能なチューナーが復旧しました（{len(available_tuners)}/{len(tuners)}台利用可能）: `{', '.join(avail_names)}`",
+            ":white_check_mark:"
+        )
 
 def check_alerts(epg_data, mirakurun_data):
     now = time.time()
@@ -133,53 +187,8 @@ def check_alerts(epg_data, mirakurun_data):
             state.active_conflicts = 0
             send_webhook("録画予約競合 解消", "予約競合が解消されました。全予約が正常に割り当てられています。", ":white_check_mark:")
 
-    # 3. Tuners Fault / Unavailability
-    # Mirakurun が正常に応答している場合のみ判定（一時的なスクレイプ失敗で状態がクリアされるのを防止）
-    if mirakurun_data.get("up", False) and "tuners" in mirakurun_data:
-        raw_faulty = set()
-        for t in mirakurun_data.get("tuners", []):
-            t_name = t.get("name", f"Tuner{t.get('index')}")
-            if t.get("isFault", False) or not t.get("isAvailable", True):
-                raw_faulty.add(t_name)
-
-        # 異常が検知されたチューナーのタイマー開始 / 継続
-        for t_name in raw_faulty:
-            if t_name not in state.tuner_fault_since:
-                state.tuner_fault_since[t_name] = now
-
-        # 正常に戻ったチューナーのタイマー解除
-        for t_name in list(state.tuner_fault_since.keys()):
-            if t_name not in raw_faulty:
-                del state.tuner_fault_since[t_name]
-
-        # 閾値（デフォルト10分: 600秒）以上継続して異常なチューナーを抽出
-        confirmed_faulty = {
-            t_name for t_name, start_time in state.tuner_fault_since.items()
-            if (now - start_time) >= TUNER_FAULT_THRESHOLD_SECONDS
-        }
-
-        # 新規に障害確定したチューナー（未通知のもの）
-        new_faulty = confirmed_faulty - state.faulty_tuners
-        # 復旧したチューナー（過去に通知済みだが、現在は raw_faulty にいないもの）
-        recovered_faulty = state.faulty_tuners - raw_faulty
-
-        if new_faulty:
-            minutes = TUNER_FAULT_THRESHOLD_SECONDS // 60
-            time_desc = f"{minutes}分" if minutes > 0 else f"{TUNER_FAULT_THRESHOLD_SECONDS}秒"
-            send_webhook(
-                "チューナー障害検知",
-                f"以下のチューナーが **{time_desc}以上継続** して利用不可または故障状態です: `{', '.join(sorted(new_faulty))}`",
-                ":rotating_light:"
-            )
-            state.faulty_tuners.update(new_faulty)
-
-        if recovered_faulty:
-            send_webhook(
-                "チューナー復旧検知",
-                f"以下のチューナーが正常復旧しました: `{', '.join(sorted(recovered_faulty))}`",
-                ":white_check_mark:"
-            )
-            state.faulty_tuners.difference_update(recovered_faulty)
+    # 3. Tuners Fault / Unavailability (全チューナー利用不可時のみ通知)
+    _check_tuner_status(mirakurun_data, now)
 
     # 4. Storage Low warning
     if epg_up:

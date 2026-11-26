@@ -221,7 +221,7 @@ WatchServer 内の `recorder-exporter` コンテナが `recorder.internal` (10.0
   - **ストレージ容量・使用率**: 録画保存先 (`recorded`) および一時録画領域 (`recording`) の残容量と使用率 (残100GB未満/95%以上で警告)
   - **Mirakurunエラー・ストリーム**: バッファオーバーフロー、チューナーデバイス再起動回数、アクティブストリーム数
 - **Webhook通知**:
-  - `watch_server/docker/env_file` の `ALERT_WEBHOOK_URL` (または `SNMP_TRAP_WEBHOOK_URL`) を設定すると、予約競合発生時、チューナー障害時、ストレージ容量低下時、サービスダウン時に Discord / Slack へ即時アラート通知が送信されます。
+  - `watch_server/docker/env_file` の `ALERT_WEBHOOK_URL` (または `SNMP_TRAP_WEBHOOK_URL`) を設定すると、予約競合発生時、全チューナー利用不可時、ストレージ容量低下時、サービスダウン時に Discord / Slack へアラート通知が送信されます。
 
 ## ネットワーク機器・NASのSNMP設定
 
