@@ -1,8 +1,13 @@
+properties([
+  disableConcurrentBuilds(),
+  pipelineTriggers([githubPush()])
+])
+
 node {
   def sshCredentialsId = '2ab285bf-f522-4458-beee-b7c0b5b13a8b'
   try{
     stage('CheckOut'){
-      checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/southernwind/HomeNetwork']]])
+      checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/xm-i/HomeNetwork']]])
     }
 
     stage('Configuration'){
