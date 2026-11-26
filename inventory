@@ -38,7 +38,7 @@ ansible_user=batch
 pinpon-server.internal
 
 [pinpon:vars]
-ansible_user=pinpon
+ansible_user=root
 
 [cicd]
 cicd.internal

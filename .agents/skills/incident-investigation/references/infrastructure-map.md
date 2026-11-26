@@ -12,10 +12,10 @@
 | `db` | `db-server.internal` | `10.0.3.2` | `db` | `postgresql` / `postgresql@*-main` (:5432), `prometheus-node-exporter` (:9100) | PostgreSQL ログ (`/var/log/postgresql/`), `db_server/docker/` |
 | `watch` | `watch-server.internal` | `10.0.3.3` | `watch` | `docker.service` (Compose: `prometheus`:9090, `alertmanager`:9093, `grafana`:3000, `blackbox-exporter`:9115, `snmp-exporter`:9116, `snmptrapd`:162/udp, `recorder-exporter`:9876), `prometheus-node-exporter` (:9100) | `/home/watch/docker/` (`docker-compose.yml`, `prometheus/`, `alertmanager/`, `grafana/`) |
 | `batch` | `batch-server.internal` | `10.0.3.5` | `batch` | `rundeckd` (:4440), `postgresql@*-main`, `prometheus-node-exporter` (:9100) | `/var/log/rundeck/` |
-| `pinpon` | `pinpon-server.internal` | `10.0.3.6` | `pinpon` | `pinpon` (:5000, .NET 10), `prometheus-node-exporter` (:9100) | `/opt/pinpon/`, `journalctl -u pinpon` |
+| `pinpon` | `pinpon-server.internal` | `10.0.3.6` | `pinpon` (Ansible: `root`) | `pinpon` (:5000, .NET 10), `prometheus-node-exporter` (:9100) | `/opt/pinpon/`, `journalctl -u pinpon` |
 | `cicd` | `cicd.internal` | `10.0.3.7` | `cicd` | Podman 系 systemd: `jenkins` (:8080/:50000), `sonarqube` (:9000), `tailscale-funnel`, `prometheus-node-exporter` (:9100) | `/opt/jenkins/home`, `/opt/sonarqube/logs`, `/opt/tailscale/config/serve.json` |
 | `recorder` | `recorder.internal` | `10.0.0.8` | `recorder` | EPGStation (:8888), Mirakurun (:40772) | `watch` 上の `recorder-exporter` 経由でも状態確認可 |
-| `proxmox`（旧 `kvm`） | `proxmox.internal`（旧 `kvm-host.internal`） | `10.0.0.7` | `root` | Proxmox VE 9.2 ハイパーバイザ, `prometheus-node-exporter` (:9100) | `qm list`, `vmbr0`, Web UI (`https://pve.home.internal/` / `:8006`) |
+| `proxmox`（旧 `kvm`） | `proxmox.internal`（旧 `kvm-host.internal`） | `10.0.0.7` | `root` | Proxmox VE 9.2 ハイパーバイザ, `prometheus-node-exporter` (:9100) | `qm list`, `pct list`, `vmbr0`, Web UI (`https://pve.home.internal/` / `:8006`) |
 | `aquarium` | `aqua-raspi.internal` | `10.0.0.11` | `pi` | `aqua_state_reporter`, `prometheus-node-exporter`（※現在監視アラート対象外） | `/home/pi/services/aqua_state_reporter/` |
 
 ### SSH 対象外の監視・ネットワーク・ストレージ機器（SNMP 監視）
@@ -75,7 +75,7 @@
    - IP 直指定 (`10.0.0.2`) で `dns` の `dnsmasq` 状態・`/etc/dnsmasq-hosts` を確認
    - DHCP 動的クライアント経由の広告ブロック影響なら `dnsfilter` (`10.0.3.8`) の `dnsfilter.service` / Podman ログ・`AdGuardHome.yaml` を確認
 3. **ホストごと疎通不可 (`HostDown`)**
-   - `proxmox` (`10.0.0.7`, user: `root`) で `qm list` を確認し、VM 停止・ハングかネットワーク問題かを切り分け
+   - `proxmox` (`10.0.0.7`, user: `root`) で `qm list` および `pct list` を確認し、VM / LXC 停止・ハングかネットワーク問題かを切り分け
 4. **Jenkins Webhook が届かない / CI 失敗**
    - `cicd` の `jenkins.service` / `tailscale-funnel.service` と `podman logs`、SonarQube 利用時は `sonarqube.service` と `db` の PostgreSQL 疎通を確認
 5. **録画異常・予約競合アラート**

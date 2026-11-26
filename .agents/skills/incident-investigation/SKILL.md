@@ -124,9 +124,9 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 db 'systemctl status postgresql --no-pa
 ssh -o BatchMode=yes -o ConnectTimeout=5 db 'sudo -n -u postgres psql -c "SELECT pid, usename, datname, state, wait_event_type, left(query, 80) FROM pg_stat_activity WHERE state != '\''idle'\'';"'
 ```
 
-#### Proxmox VM 無応答時 (`proxmox` / `10.0.0.7`)
+#### Proxmox VM / LXC 無応答時 (`proxmox` / `10.0.0.7`)
 ```powershell
-ssh -o BatchMode=yes -o ConnectTimeout=5 root@10.0.0.7 'qm list'
+ssh -o BatchMode=yes -o ConnectTimeout=5 root@10.0.0.7 'qm list; pct list'
 ```
 
 ### Step 4: 調査結果の整理と報告
