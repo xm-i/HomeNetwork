@@ -73,5 +73,6 @@ node {
         color: 'danger',
         message: "Ansible実行に失敗しました。"
       )
+      throw e
   }
 }
