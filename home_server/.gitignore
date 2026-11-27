@@ -1,3 +1,0 @@
-certs/*
-nginx/certs/*
-!nginx/certs/.gitkeep

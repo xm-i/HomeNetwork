@@ -2,8 +2,14 @@
   import_playbook: ./dns_server.yaml
 - name: dnsfilter_server
   import_playbook: ./dnsfilter_server.yaml
-- name: home_server
-  import_playbook: ./home_server.yaml
+- name: web_server
+  import_playbook: ./web_server.yaml
+- name: dashboard_ap_server
+  import_playbook: ./dashboard_ap_server.yaml
+- name: electric_power_monitor_server
+  import_playbook: ./electric_power_monitor_server.yaml
+- name: home_automation_server
+  import_playbook: ./home_automation_server.yaml
 #- name: aquarium
 #  import_playbook: ./aquarium.yaml
 - name: db_server

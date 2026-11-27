@@ -27,3 +27,6 @@
 10.0.3.6 pinpon-server.internal
 10.0.3.7 cicd.internal
 10.0.3.8 dnsfilter.internal
+10.0.3.9 dashboard-ap.internal
+10.0.3.10 electric-power-monitor.internal
+10.0.3.11 home-automation.internal

@@ -1,0 +1,142 @@
+- hosts: dashboard_ap
+  become: no
+  remote_user: root
+  gather_facts: no
+
+  tasks:
+    - name: Set timezone
+      timezone:
+        name: Asia/Tokyo
+
+    - name: Ensure dashboard group exists
+      group:
+        name: dashboard
+        state: present
+
+    - name: Ensure dashboard user exists
+      user:
+        name: dashboard
+        group: dashboard
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Allow passwordless sudo for dashboard user
+      copy:
+        dest: /etc/sudoers.d/dashboard
+        content: "dashboard ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Check if root authorized_keys exists
+      stat:
+        path: /root/.ssh/authorized_keys
+      register: root_authorized_keys
+
+    - name: Ensure dashboard .ssh directory exists
+      file:
+        path: /home/dashboard/.ssh
+        state: directory
+        owner: dashboard
+        group: dashboard
+        mode: "0700"
+
+    - name: Sync SSH authorized_keys from root to dashboard
+      copy:
+        src: /root/.ssh/authorized_keys
+        dest: /home/dashboard/.ssh/authorized_keys
+        remote_src: yes
+        owner: dashboard
+        group: dashboard
+        mode: "0600"
+      when: root_authorized_keys.stat.exists
+
+    - name: Install apt packages
+      apt:
+        name:
+          - aspnetcore-runtime-10.0
+          - wakeonlan
+          - curl
+          - ca-certificates
+          - prometheus-node-exporter
+        state: present
+        update_cache: yes
+
+    - name: Install internal mkcert root CA certificate
+      copy:
+        src: ./common/certs/mkcert-pki.rootCA.crt
+        dest: /usr/local/share/ca-certificates/mkcert-pki.rootCA.crt
+        owner: root
+        group: root
+        mode: "0644"
+      register: ca_cert_copy
+
+    - name: Update CA certificates
+      command: update-ca-certificates
+      when: ca_cert_copy.changed
+
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
+
+    - name: Create app directory
+      file:
+        path: /opt/back-end-api-service
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Copy systemd service file
+      copy:
+        src: ./dashboard_ap_server/services/servicefiles/back_end_api.service
+        dest: /etc/systemd/system/back_end_api.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: back_end_api_service_copy
+
+    - name: Reload systemd daemon if back_end_api.service changed
+      systemd:
+        daemon_reload: yes
+      when: back_end_api_service_copy.changed
+
+    - name: Enable back_end_api service
+      service:
+        name: back_end_api
+        enabled: yes
+
+    - name: Check if back_end_api binary is deployed
+      stat:
+        path: /opt/back-end-api-service/Back.dll
+      register: back_end_api_binary
+
+    - name: Start back_end_api service if binary is deployed
+      service:
+        name: back_end_api
+        state: started
+      when: back_end_api_binary.stat.exists
+      register: back_end_api_started
+
+    - name: Restart back_end_api service if unit file changed and binary is deployed
+      systemd:
+        name: back_end_api
+        state: restarted
+      when:
+        - back_end_api_binary.stat.exists
+        - back_end_api_service_copy.changed
+        - not (back_end_api_started.changed | default(false))
+
+    - name: Add OUI update cron job
+      cron:
+        name: oui更新
+        minute: "44"
+        hour: "4"
+        job: "curl --location --request POST 'http://127.0.0.1:5000/api/network-api/post-update-vendor-list-request' --header 'Content-Type: application/json'"
+        state: present

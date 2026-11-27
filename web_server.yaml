@@ -1,0 +1,140 @@
+- hosts: web
+  become: no
+  remote_user: root
+  gather_facts: no
+
+  tasks:
+    - name: Set timezone
+      timezone:
+        name: Asia/Tokyo
+
+    - name: Ensure web group exists
+      group:
+        name: web
+        state: present
+
+    - name: Ensure web user exists
+      user:
+        name: web
+        group: web
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Allow passwordless sudo for web user
+      copy:
+        dest: /etc/sudoers.d/web
+        content: "web ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Check if root authorized_keys exists
+      stat:
+        path: /root/.ssh/authorized_keys
+      register: root_authorized_keys
+
+    - name: Ensure web .ssh directory exists
+      file:
+        path: /home/web/.ssh
+        state: directory
+        owner: web
+        group: web
+        mode: "0700"
+
+    - name: Sync SSH authorized_keys from root to web
+      copy:
+        src: /root/.ssh/authorized_keys
+        dest: /home/web/.ssh/authorized_keys
+        remote_src: yes
+        owner: web
+        group: web
+        mode: "0600"
+      when: root_authorized_keys.stat.exists
+
+    - name: Install apt packages
+      apt:
+        name:
+          - nginx
+          - prometheus-node-exporter
+        state: present
+        update_cache: yes
+
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
+
+    - name: Create web directories
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - { path: /var/www/html/dashboard }
+        - { path: /etc/nginx/certs }
+
+    - name: Copy nginx certificates
+      copy:
+        src: ./web_server/certs/
+        dest: /etc/nginx/certs/
+        owner: root
+        group: root
+        mode: "0600"
+      register: web_certs_copy
+
+    - name: Copy nginx site configuration
+      copy:
+        src: ./web_server/nginx/sites-available/default
+        dest: /etc/nginx/sites-available/default
+        owner: root
+        group: root
+        mode: "0644"
+      register: nginx_site_copy
+
+    - name: Ensure default nginx site is enabled
+      file:
+        src: /etc/nginx/sites-available/default
+        dest: /etc/nginx/sites-enabled/default
+        state: link
+        force: yes
+      register: nginx_site_link
+
+    - name: Check if required TLS certificates exist
+      stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/nginx/certs/_wildcard.home.internal+1.pem
+        - /etc/nginx/certs/_wildcard.home-server.internal+1.pem
+      register: web_tls_certs
+
+    - name: Determine whether TLS certificates are ready
+      set_fact:
+        web_certs_ready: "{{ web_tls_certs.results | map(attribute='stat.exists') | min }}"
+
+    - name: Enable nginx service
+      service:
+        name: nginx
+        enabled: yes
+
+    - name: Start nginx service if certificates exist
+      service:
+        name: nginx
+        state: started
+      when: web_certs_ready | bool
+      register: nginx_started
+
+    - name: Restart nginx service if certs or configuration changed
+      service:
+        name: nginx
+        state: restarted
+      when:
+        - web_certs_ready | bool
+        - web_certs_copy.changed or nginx_site_copy.changed or nginx_site_link.changed
+        - not (nginx_started.changed | default(false))

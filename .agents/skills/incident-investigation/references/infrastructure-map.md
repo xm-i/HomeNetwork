@@ -8,7 +8,10 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `dns` | `dns-server.internal` | `10.0.0.2` | `dns` | `dnsmasq`, `dhcp_web` (:80), `dhcp_assign_notifier`, `prometheus-node-exporter` (:9100) | `/etc/dnsmasq.conf`, `/etc/dnsmasq-hosts`, `/var/lib/misc/dnsmasq.leases`, `/home/dns/services/` |
 | `dnsfilter` | `dnsfilter.internal` | `10.0.3.8` | `dnsfilter` | `dnsfilter.service` (Podman: `dnsfilter` / AdGuard Home, `:3000`, `:53`), `prometheus-node-exporter` (:9100) | `/opt/dnsfilter/conf/AdGuardHome.yaml`, `/opt/dnsfilter/work/`, `/opt/dnsfilter/scripts/update_280blocker.py` |
-| `home` | `home.internal` | `10.0.3.1` | `home` | `nginx` (:80/:443), `back_end_api` (:5000), `electric_power_monitor`, `home_automation`, `prometheus-node-exporter` (:9100) | `/etc/nginx/sites-available/default`, `/etc/nginx/certs/`, `/var/log/nginx/`, `/opt/back-end-api-service/`, `/var/www/html/dashboard` |
+| `home` | `home.internal` | `10.0.3.1` | `web` (Ansible: `root`) | `nginx` (:80/:443), `prometheus-node-exporter` (:9100) | `/etc/nginx/sites-available/default`, `/etc/nginx/certs/`, `/var/log/nginx/`, `/var/www/html/dashboard` |
+| `dashboard-ap` | `dashboard-ap.internal` | `10.0.3.9` | `dashboard` (Ansible: `root`) | `back_end_api` (:5000, .NET 10), `prometheus-node-exporter` (:9100) | `/opt/back-end-api-service/`, `journalctl -u back_end_api` |
+| `electric-power-monitor` | `electric-power-monitor.internal` | `10.0.3.10` | `power` (Ansible: `root`) | `electric_power_monitor` (.NET 10, USB `/dev/ttyUSB0`), `prometheus-node-exporter` (:9100) | `/opt/electric-power-monitor-service/`, `journalctl -u electric_power_monitor` |
+| `home-automation` | `home-automation.internal` | `10.0.3.11` | `automation` (Ansible: `root`) | `home_automation` (.NET 10), `prometheus-node-exporter` (:9100) | `/opt/home-automation-service/`, `journalctl -u home_automation` |
 | `db` | `db-server.internal` | `10.0.3.2` | `db` (Ansible: `root`) | `postgresql` / `postgresql@*-main` (:5432), `prometheus-node-exporter` (:9100) | PostgreSQL ログ (`/var/log/postgresql/`), `db_server/docker/` |
 | `watch` | `watch-server.internal` | `10.0.3.3` | `watch` | `docker.service` (Compose: `prometheus`:9090, `alertmanager`:9093, `grafana`:3000, `blackbox-exporter`:9115, `snmp-exporter`:9116, `snmptrapd`:162/udp, `recorder-exporter`:9876), `prometheus-node-exporter` (:9100) | `/home/watch/docker/` (`docker-compose.yml`, `prometheus/`, `alertmanager/`, `grafana/`) |
 | `batch` | `batch-server.internal` | `10.0.3.5` | `batch` (Ansible: `root`) | `rundeckd` (:4440), `prometheus-node-exporter` (:9100) | `/var/log/rundeck/` |
@@ -28,13 +31,13 @@
 
 ## 2. HTTPS リバースプロキシ経路（`home` Nginx → バックエンド）
 
-`home_server/nginx/sites-available/default` に基づく主要エンドポイントと転送先:
+`web_server/nginx/sites-available/default` に基づく主要エンドポイントと転送先:
 
 | URL | 転送先 / 実体 |
 | :--- | :--- |
 | `https://home.internal/` | `https://dashboard.home.internal/` へリダイレクト |
 | `https://dashboard.home.internal/` | `home` 上の `/var/www/html/dashboard`（静的配信） |
-| `https://dashboard-api.home.internal/` | `home` 上の `http://localhost:5000` (`back_end_api.service`) |
+| `https://dashboard-api.home.internal/` | `http://dashboard-ap.internal:5000` (`back_end_api.service`) |
 | `https://jenkins.home.internal/` | `http://cicd.internal:8080` (`jenkins.service`) |
 | `https://sonarqube.home.internal/` | `http://cicd.internal:9000` (`sonarqube.service` / DB: `db-server.internal:5432`) |
 | `https://monitor.home.internal/` / `https://grafana.home.internal/` | `http://watch-server.internal:3000` (`grafana` コンテナ) |
@@ -52,7 +55,10 @@
 
 - `HostDown`: `node_exporter` が 3 分以上応答なし（`aqua-raspi.internal` 除外）
 - `SystemdServiceDown`: 主要 systemd ユニットが 2 分以上 `active` ではない
-  - `home`: `nginx`, `back_end_api`, `home_automation`
+  - `home`: `nginx`
+  - `dashboard-ap`: `back_end_api`
+  - `electric-power-monitor`: `electric_power_monitor`
+  - `home-automation`: `home_automation`
   - `db`: `postgresql@*-main`
   - `dns`: `dnsmasq`, `dhcp_web`, `dhcp_assign_notifier`
   - `batch`: `rundeckd`

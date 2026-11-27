@@ -1,6 +1,6 @@
 [Unit]
 Description = Electric Power Monitor Service
-After=network-online.target nginx.service back_end_api.service
+After=network-online.target
 Wants=network-online.target
 
 [Service]

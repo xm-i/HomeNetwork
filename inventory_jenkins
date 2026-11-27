@@ -4,11 +4,29 @@
 [dns:vars]
 ansible_user=dns
 
-[home]
+[web]
 home.internal
 
-[home:vars]
-ansible_user=home
+[web:vars]
+ansible_user=root
+
+[dashboard_ap]
+dashboard-ap.internal
+
+[dashboard_ap:vars]
+ansible_user=root
+
+[electric_power_monitor]
+electric-power-monitor.internal
+
+[electric_power_monitor:vars]
+ansible_user=root
+
+[home_automation]
+home-automation.internal
+
+[home_automation:vars]
+ansible_user=root
 
 [aquarium]
 aqua-raspi.internal

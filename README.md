@@ -168,7 +168,11 @@ Jenkins Managed Files の旧 `external`（`007d1ea8-f543-45a2-b446-b52b3af1a3c5`
 
 - 仮想化基盤は **Proxmox VE 9.2**（ASRock DeskMini B760 / ブリッジ `vmbr0` / IP: `10.0.0.7/20`, GW: `10.0.0.1`, DNS: `10.0.0.2`）。
 - Web UI: `https://pve.home.internal/`（Nginx 経由）または `https://10.0.0.7:8006/`。
-- `HomeServer`（VMID `101`）へ電力監視用 FTDI USB UART（`0403:6001`）を USB パススルー接続。
+- `ElectricPowerMonitor` へ電力監視用 FTDI USB UART（`0403:6001`）を LXC デバイスパススルー接続（Unprivileged LXC 作成後に Proxmox ホスト上で設定）:
+  ```bash
+  pct set <CTID> -dev0 /dev/ttyUSB0,gid=20,mode=0660
+  pct reboot <CTID>
+  ```
 - 監視のため Proxmox ホストに `prometheus-node-exporter` を導入しています（`apt update && apt install -y prometheus-node-exporter`）。
 
 # 監視サーバー (WatchServer)
@@ -181,7 +185,10 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
 - **監視対象ノード**:
   - proxmox.internal (10.0.0.7 / Proxmox VE ハイパーバイザ)
   - watch-server (監視サーバー自身)
-  - home.internal (Web / Nginx)
+  - home.internal (10.0.3.1 / Web リバースプロキシ & フロントエンド)
+  - dashboard-ap.internal (10.0.3.9 / Dashboard API)
+  - electric-power-monitor.internal (10.0.3.10 / 電力監視)
+  - home-automation.internal (10.0.3.11 / ホームオートメーション)
   - db-server (PostgreSQL)
   - batch-server
   - dns-server.internal (10.0.0.2 / DNS & DHCP)
@@ -202,7 +209,7 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
 - **通知先**: `watch_server/docker/env_file` の `ALERT_WEBHOOK_URL`（未設定時は `SNMP_TRAP_WEBHOOK_URL` にフォールバック）
 - **主なアラートルール**:
   - `HostDown`: `node` ジョブの `up == 0` が 3 分継続（`aqua-raspi.internal` 除外）
-  - `SystemdServiceDown`: `nginx` / `jenkins` / `tailscale-funnel` / `back_end_api` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` / `sonarqube` / `dnsfilter` の停止（2 分継続）
+  - `SystemdServiceDown`: `nginx` / `jenkins` / `tailscale-funnel` / `back_end_api` / `electric_power_monitor` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` / `sonarqube` / `dnsfilter` の停止（2 分継続）
   - `HttpsEndpointDown`: Nginx 配下全 `*.home.internal` の HTTPS プローブ失敗（3 分継続）
   - `SslCertificateExpiringSoon`: TLS 証明書の残り有効期限が 30 日未満
   - `BlackboxExporterDown` / `RecorderExporterDown`: 各エクスポーターの取得失敗（3 分継続）

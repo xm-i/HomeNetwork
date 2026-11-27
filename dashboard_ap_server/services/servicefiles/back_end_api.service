@@ -6,6 +6,7 @@ Wants=network-online.target
 [Service]
 WorkingDirectory=/opt/back-end-api-service
 ExecStart=/usr/bin/dotnet /opt/back-end-api-service/Back.dll
+Environment=ASPNETCORE_URLS=http://0.0.0.0:5000
 Restart=always
 RestartSec=5s
 Type=simple

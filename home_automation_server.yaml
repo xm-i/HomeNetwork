@@ -1,0 +1,132 @@
+- hosts: home_automation
+  become: no
+  remote_user: root
+  gather_facts: no
+
+  tasks:
+    - name: Set timezone
+      timezone:
+        name: Asia/Tokyo
+
+    - name: Ensure automation group exists
+      group:
+        name: automation
+        state: present
+
+    - name: Ensure automation user exists
+      user:
+        name: automation
+        group: automation
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Allow passwordless sudo for automation user
+      copy:
+        dest: /etc/sudoers.d/automation
+        content: "automation ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Check if root authorized_keys exists
+      stat:
+        path: /root/.ssh/authorized_keys
+      register: root_authorized_keys
+
+    - name: Ensure automation .ssh directory exists
+      file:
+        path: /home/automation/.ssh
+        state: directory
+        owner: automation
+        group: automation
+        mode: "0700"
+
+    - name: Sync SSH authorized_keys from root to automation
+      copy:
+        src: /root/.ssh/authorized_keys
+        dest: /home/automation/.ssh/authorized_keys
+        remote_src: yes
+        owner: automation
+        group: automation
+        mode: "0600"
+      when: root_authorized_keys.stat.exists
+
+    - name: Install apt packages
+      apt:
+        name:
+          - aspnetcore-runtime-10.0
+          - ca-certificates
+          - prometheus-node-exporter
+        state: present
+        update_cache: yes
+
+    - name: Install internal mkcert root CA certificate
+      copy:
+        src: ./common/certs/mkcert-pki.rootCA.crt
+        dest: /usr/local/share/ca-certificates/mkcert-pki.rootCA.crt
+        owner: root
+        group: root
+        mode: "0644"
+      register: ca_cert_copy
+
+    - name: Update CA certificates
+      command: update-ca-certificates
+      when: ca_cert_copy.changed
+
+    - name: Ensure prometheus-node-exporter is enabled and started
+      service:
+        name: prometheus-node-exporter
+        enabled: yes
+        state: started
+
+    - name: Create app directory
+      file:
+        path: /opt/home-automation-service
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Copy systemd service file
+      copy:
+        src: ./home_automation_server/services/servicefiles/home_automation.service
+        dest: /etc/systemd/system/home_automation.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: ha_service_copy
+
+    - name: Reload systemd daemon if home_automation.service changed
+      systemd:
+        daemon_reload: yes
+      when: ha_service_copy.changed
+
+    - name: Enable home_automation service
+      service:
+        name: home_automation
+        enabled: yes
+
+    - name: Check if home_automation binary is deployed
+      stat:
+        path: /opt/home-automation-service/HomeAutomation.dll
+      register: ha_binary
+
+    - name: Start home_automation service if binary is deployed
+      service:
+        name: home_automation
+        state: started
+      when: ha_binary.stat.exists
+      register: ha_started
+
+    - name: Restart home_automation service if unit file changed and binary is deployed
+      systemd:
+        name: home_automation
+        state: restarted
+      when:
+        - ha_binary.stat.exists
+        - ha_service_copy.changed
+        - not (ha_started.changed | default(false))

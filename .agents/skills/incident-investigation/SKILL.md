@@ -66,7 +66,7 @@ HomeNetwork 環境で障害・アラート・エラー・疎通不良などの�
 ### Step 1: 事象把握と構成確認（ローカル）
 1. ユーザー報告から **症状・対象 URL / ホスト・発生時刻・エラーメッセージ・アラート内容** を整理する。
 2. [infrastructure-map.md](./references/infrastructure-map.md) および関連ファイルを確認し、依存経路を特定する。
-   - Nginx ルーティング: `home_server/nginx/sites-available/default`
+   - Nginx ルーティング: `web_server/nginx/sites-available/default`
    - アラートルール / 監視対象: `watch_server/docker/prometheus/rules.yml`, `watch_server/docker/prometheus/prometheus.yml`
    - 各サーバー構成: `<server>_server.yaml`, `dns_server/dnsmasq/dnsmasq.conf`, `dns_server/dnsmasq/dnsmasq-hosts`
 
