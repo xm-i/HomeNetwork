@@ -4,7 +4,7 @@ properties([
 ])
 
 node {
-  def sshCredentialsId = '2ab285bf-f522-4458-beee-b7c0b5b13a8b'
+  def sshCredentialsId = '02c7532f-3df9-4393-bddb-eca365b6fef9'
   try{
     stage('CheckOut'){
       checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/xm-i/HomeNetwork']]])
