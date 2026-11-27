@@ -1,19 +1,78 @@
 - hosts: batch
-  become: yes
-  remote_user: batch
+  become: no
+  remote_user: root
   gather_facts: no
+
+  vars:
+    rundeck_version: "{{ (rundeck | default({}, true)).version | default('5.11.1.20250415-1', true) }}"
+    rundeck_pg_jdbc_version: "42.7.5"
+    rundeck_slack_plugin_version: "1.3.4"
 
   tasks:
     - name: Set timezone
       timezone:
         name: Asia/Tokyo
 
-    - name: Install apt packages
+    - name: Ensure batch group exists
+      group:
+        name: batch
+        state: present
+
+    - name: Ensure batch user exists
+      user:
+        name: batch
+        group: batch
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Allow passwordless sudo for batch user
+      copy:
+        dest: /etc/sudoers.d/batch
+        content: "batch ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Check if root authorized_keys exists
+      stat:
+        path: /root/.ssh/authorized_keys
+      register: root_authorized_keys
+
+    - name: Ensure batch .ssh directory exists
+      file:
+        path: /home/batch/.ssh
+        state: directory
+        owner: batch
+        group: batch
+        mode: "0700"
+
+    - name: Sync SSH authorized_keys from root to batch
+      copy:
+        src: /root/.ssh/authorized_keys
+        dest: /home/batch/.ssh/authorized_keys
+        remote_src: yes
+        owner: batch
+        group: batch
+        mode: "0600"
+      when: root_authorized_keys.stat.exists
+
+    - name: Install base apt packages
       apt:
         name:
-          - openjdk-11-jdk
-          - prometheus-node-exporter
+          - openjdk-21-jre-headless
           - aspnetcore-runtime-10.0
+          - prometheus-node-exporter
+          - curl
+          - gnupg
+          - ca-certificates
+          - openssh-client
+          - uuid-runtime
+          - openssl
+          - sysvinit-utils
         state: present
         update_cache: yes
 
@@ -22,3 +81,162 @@
         name: prometheus-node-exporter
         enabled: yes
         state: started
+
+    - name: Ensure apt keyrings directory exists
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Download Rundeck APT repository GPG key
+      get_url:
+        url: https://packages.rundeck.com/pagerduty/rundeck/gpgkey
+        dest: /etc/apt/keyrings/rundeck.asc
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Configure Rundeck APT repository
+      copy:
+        dest: /etc/apt/sources.list.d/rundeck.list
+        content: "deb [signed-by=/etc/apt/keyrings/rundeck.asc] https://packages.rundeck.com/pagerduty/rundeck/any/ any main\n"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Pin Rundeck APT package version
+      copy:
+        dest: /etc/apt/preferences.d/rundeck
+        content: |
+          Package: rundeck
+          Pin: version {{ rundeck_version }}
+          Pin-Priority: 1001
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Install Rundeck package
+      apt:
+        name: "rundeck={{ rundeck_version }}"
+        state: present
+        update_cache: yes
+      register: rundeck_pkg_install
+
+    - name: Reload systemd daemon if rundeck package was installed
+      systemd:
+        daemon_reload: yes
+      when: rundeck_pkg_install.changed
+
+    - name: Create application and Rundeck directories
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: /opt/dashboard-batch, owner: root, group: root, mode: "0755" }
+        - { path: /opt/rundeck, owner: root, group: root, mode: "0755" }
+        - { path: /opt/rundeck/nodes, owner: root, group: root, mode: "0755" }
+        - { path: /var/lib/rundeck/libext, owner: rundeck, group: rundeck, mode: "0750" }
+
+    - name: Download PostgreSQL JDBC driver for Rundeck
+      get_url:
+        url: "https://jdbc.postgresql.org/download/postgresql-{{ rundeck_pg_jdbc_version }}.jar"
+        dest: "/var/lib/rundeck/libext/postgresql-{{ rundeck_pg_jdbc_version }}.jar"
+        owner: rundeck
+        group: rundeck
+        mode: "0644"
+      register: rundeck_pg_driver
+
+    - name: Download Slack incoming webhook plugin for Rundeck
+      get_url:
+        url: "https://github.com/rundeck-plugins/slack-incoming-webhook-plugin/releases/download/v{{ rundeck_slack_plugin_version }}/slack-incoming-webhook-plugin-{{ rundeck_slack_plugin_version }}.jar"
+        dest: /var/lib/rundeck/libext/slack-incoming-webhook-plugin.jar
+        owner: rundeck
+        group: rundeck
+        mode: "0644"
+      register: rundeck_slack_plugin
+
+    - name: Copy Rundeck node definitions
+      copy:
+        src: ./batch_server/rundeck/nodes/servers.yaml
+        dest: /opt/rundeck/nodes/servers.yaml
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Configure Rundeck framework.properties
+      template:
+        src: ./batch_server/rundeck/framework.properties.j2
+        dest: /etc/rundeck/framework.properties
+        owner: rundeck
+        group: rundeck
+        mode: "0640"
+      register: rundeck_framework_cfg
+
+    - name: Determine whether Rundeck secrets are configured
+      set_fact:
+        rundeck_secrets_configured: "{{ ((((rundeck | default({}, true)).db_password | default('', true)) | length > 0) and (((rundeck | default({}, true)).encryption_password | default('', true)) | length > 0) and (((rundeck | default({}, true)).admin_password | default('', true)) | length > 0)) }}"
+
+    - name: Configure Rundeck rundeck-config.properties
+      template:
+        src: ./batch_server/rundeck/rundeck-config.properties.j2
+        dest: /etc/rundeck/rundeck-config.properties
+        owner: rundeck
+        group: rundeck
+        mode: "0640"
+      no_log: true
+      when: rundeck_secrets_configured | bool
+      register: rundeck_main_cfg
+
+    - name: Configure Rundeck realm.properties
+      template:
+        src: ./batch_server/rundeck/realm.properties.j2
+        dest: /etc/rundeck/realm.properties
+        owner: rundeck
+        group: rundeck
+        mode: "0640"
+      no_log: true
+      when: rundeck_secrets_configured | bool
+      register: rundeck_realm_cfg
+
+    - name: Check if Rundeck is already configured for PostgreSQL
+      command: grep -q "jdbc:postgresql://" /etc/rundeck/rundeck-config.properties
+      register: rundeck_pg_configured
+      failed_when: false
+      changed_when: false
+
+    - name: Determine whether Rundeck is ready to start
+      set_fact:
+        rundeck_ready: "{{ (rundeck_secrets_configured | bool) or (rundeck_pg_configured.rc == 0) }}"
+
+    - name: Notice if Rundeck secrets are not yet configured
+      debug:
+        msg: "rundeck.db_password / rundeck.encryption_password / rundeck.admin_password are not configured in group_vars/batch.yaml (Jenkins Managed File 1ac1e035-f68a-4f76-bda0-17a5e8cb9892); skipping rundeck-config.properties and realm.properties update."
+      when: not (rundeck_secrets_configured | bool)
+
+    - name: Ensure rundeckd is stopped until PostgreSQL config is applied
+      service:
+        name: rundeckd
+        state: stopped
+      when: not (rundeck_ready | bool)
+
+    - name: Enable and start rundeckd service
+      service:
+        name: rundeckd
+        enabled: yes
+        state: started
+      when: rundeck_ready | bool
+      register: rundeck_started
+
+    - name: Restart rundeckd service if configuration or plugins changed
+      service:
+        name: rundeckd
+        state: restarted
+      when:
+        - rundeck_ready | bool
+        - rundeck_pg_driver.changed or rundeck_slack_plugin.changed or rundeck_framework_cfg.changed or (rundeck_main_cfg.changed | default(false)) or (rundeck_realm_cfg.changed | default(false))
+        - not (rundeck_started.changed | default(false))

@@ -117,7 +117,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 dns 'dig @127.0.0.1 home.internal +shor
 ssh -o BatchMode=yes -o ConnectTimeout=5 dnsfilter 'dig @127.0.0.1 google.com +short'
 ```
 
-#### DB (`db`, `batch`)
+#### DB (`db`)
 ```powershell
 # SELECT 等の読み取りクエリのみ実行する
 ssh -o BatchMode=yes -o ConnectTimeout=5 db 'systemctl status postgresql --no-pager'

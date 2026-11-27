@@ -1,0 +1,6 @@
+db-server:
+  nodename: db-server
+  hostname: db-server.internal
+  username: root
+  ssh-authentication: privateKey
+  ssh-key-storage-path: keys/project/Backup/db_server.key

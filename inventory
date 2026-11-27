@@ -32,7 +32,7 @@ ansible_user=watch
 batch-server.internal
 
 [batch:vars]
-ansible_user=batch
+ansible_user=root
 
 [pinpon]
 pinpon-server.internal

@@ -11,7 +11,7 @@
 | `home` | `home.internal` | `10.0.3.1` | `home` | `nginx` (:80/:443), `back_end_api` (:5000), `electric_power_monitor`, `home_automation`, `prometheus-node-exporter` (:9100) | `/etc/nginx/sites-available/default`, `/etc/nginx/certs/`, `/var/log/nginx/`, `/opt/back-end-api-service/`, `/var/www/html/dashboard` |
 | `db` | `db-server.internal` | `10.0.3.2` | `db` | `postgresql` / `postgresql@*-main` (:5432), `prometheus-node-exporter` (:9100) | PostgreSQL ログ (`/var/log/postgresql/`), `db_server/docker/` |
 | `watch` | `watch-server.internal` | `10.0.3.3` | `watch` | `docker.service` (Compose: `prometheus`:9090, `alertmanager`:9093, `grafana`:3000, `blackbox-exporter`:9115, `snmp-exporter`:9116, `snmptrapd`:162/udp, `recorder-exporter`:9876), `prometheus-node-exporter` (:9100) | `/home/watch/docker/` (`docker-compose.yml`, `prometheus/`, `alertmanager/`, `grafana/`) |
-| `batch` | `batch-server.internal` | `10.0.3.5` | `batch` | `rundeckd` (:4440), `postgresql@*-main`, `prometheus-node-exporter` (:9100) | `/var/log/rundeck/` |
+| `batch` | `batch-server.internal` | `10.0.3.5` | `batch` (Ansible: `root`) | `rundeckd` (:4440), `prometheus-node-exporter` (:9100) | `/var/log/rundeck/` |
 | `pinpon` | `pinpon-server.internal` | `10.0.3.6` | `pinpon` (Ansible: `root`) | `pinpon` (:5000, .NET 10), `prometheus-node-exporter` (:9100) | `/opt/pinpon/`, `journalctl -u pinpon` |
 | `cicd` | `cicd.internal` | `10.0.3.7` | `cicd` | Podman 系 systemd: `jenkins` (:8080/:50000), `sonarqube` (:9000), `tailscale-funnel`, `prometheus-node-exporter` (:9100) | `/opt/jenkins/home`, `/opt/sonarqube/logs`, `/opt/tailscale/config/serve.json` |
 | `recorder` | `recorder.internal` | `10.0.0.8` | `recorder` | EPGStation (:8888), Mirakurun (:40772) | `watch` 上の `recorder-exporter` 経由でも状態確認可 |
@@ -55,7 +55,7 @@
   - `home`: `nginx`, `back_end_api`, `home_automation`
   - `db`: `postgresql@*-main`
   - `dns`: `dnsmasq`, `dhcp_web`, `dhcp_assign_notifier`
-  - `batch`: `rundeckd`, `postgresql@*-main`
+  - `batch`: `rundeckd`
   - `pinpon`: `pinpon`
   - `watch`: `docker`
   - `cicd`: `sonarqube`, `jenkins`, `tailscale-funnel`
