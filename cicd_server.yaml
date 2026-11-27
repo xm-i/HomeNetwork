@@ -96,6 +96,25 @@
       register: jenkins_chown_result
       changed_when: jenkins_chown_result.stdout != ""
 
+    - name: Ensure Jenkins .ssh directory exists
+      file:
+        path: /opt/jenkins/home/.ssh
+        state: directory
+        owner: 1000
+        group: 1000
+        mode: "0700"
+
+    - name: Configure SSH client config for Jenkins internal deployments
+      copy:
+        dest: /opt/jenkins/home/.ssh/config
+        owner: 1000
+        group: 1000
+        mode: "0600"
+        content: |
+          Host *.internal 10.0.*
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+
     - name: Copy Jenkins Containerfile
       copy:
         src: ./cicd_server/containers/jenkins/Containerfile
