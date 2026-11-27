@@ -1,16 +1,88 @@
 - hosts: db
-  become: yes
-  remote_user: db
+  become: no
+  remote_user: root
   gather_facts: no
+
+  vars:
+    postgresql_version: "18"
 
   tasks:
     - name: Set timezone
       timezone:
         name: Asia/Tokyo
 
-    - name: apt update
+    - name: Ensure db group exists
+      group:
+        name: db
+        state: present
+
+    - name: Ensure db user exists
+      user:
+        name: db
+        group: db
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Allow passwordless sudo for db user
+      copy:
+        dest: /etc/sudoers.d/db
+        content: "db ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Check if root authorized_keys exists
+      stat:
+        path: /root/.ssh/authorized_keys
+      register: root_authorized_keys
+
+    - name: Ensure db .ssh directory exists
+      file:
+        path: /home/db/.ssh
+        state: directory
+        owner: db
+        group: db
+        mode: "0700"
+
+    - name: Sync SSH authorized_keys from root to db
+      copy:
+        src: /root/.ssh/authorized_keys
+        dest: /home/db/.ssh/authorized_keys
+        remote_src: yes
+        owner: db
+        group: db
+        mode: "0600"
+      when: root_authorized_keys.stat.exists
+
+    - name: Install locales package
       apt:
+        name: locales
+        state: present
         update_cache: yes
+
+    - name: Ensure en_US.UTF-8 is enabled in /etc/locale.gen
+      lineinfile:
+        path: /etc/locale.gen
+        regexp: '^#?\s*en_US\.UTF-8\s+UTF-8'
+        line: 'en_US.UTF-8 UTF-8'
+      register: locale_gen_file
+
+    - name: Check available locales
+      command: locale -a
+      changed_when: false
+      register: available_locales
+
+    - name: Generate en_US.UTF-8 locale
+      command: locale-gen en_US.UTF-8
+      when: locale_gen_file.changed or ('en_US.utf8' not in available_locales.stdout_lines)
+
+    - name: Set system default locale to en_US.UTF-8
+      command: update-locale LANG=en_US.UTF-8
+      when: locale_gen_file.changed or ('en_US.utf8' not in available_locales.stdout_lines)
 
     - name: Install apt packages
       apt:
@@ -18,22 +90,70 @@
           - postgresql
           - postgresql-client
           - python3-psycopg2
+          - acl
           - bzip2
+          - rsync
           - prometheus-node-exporter
         state: present
         update_cache: yes
+      environment:
+        LANG: en_US.UTF-8
+        LC_ALL: en_US.UTF-8
+
+    - name: Ensure backup directory exists
+      file:
+        path: /root/backup
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Configure PostgreSQL HomeNetwork settings
+      copy:
+        dest: "/etc/postgresql/{{ postgresql_version }}/main/conf.d/99-homenetwork.conf"
+        content: |
+          listen_addresses = '*'
+          timezone = 'Asia/Tokyo'
+          log_timezone = 'Asia/Tokyo'
+        owner: postgres
+        group: postgres
+        mode: "0644"
+      register: pg_conf_copy
+
+    - name: Allow LAN connections in pg_hba.conf
+      lineinfile:
+        path: "/etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf"
+        regexp: '^host\s+all\s+all\s+10\.0\.0\.0/20\s+'
+        line: 'host    all             all             10.0.0.0/20             scram-sha-256'
+      register: pg_hba_edit
 
     - name: Ensure PostgreSQL service is enabled and started
       service:
         name: postgresql
         enabled: yes
         state: started
+      register: pg_started
+
+    - name: Restart PostgreSQL service if configuration changed
+      service:
+        name: postgresql
+        state: restarted
+      when: (pg_conf_copy.changed or pg_hba_edit.changed) and not pg_started.changed
 
     - name: Ensure prometheus-node-exporter is enabled and started
       service:
         name: prometheus-node-exporter
         enabled: yes
         state: started
+
+    - name: Ensure postgres superuser password is set
+      become: yes
+      become_user: postgres
+      community.postgresql.postgresql_user:
+        name: postgres
+        password: "{{ postgres.root.password }}"
+        state: present
+      no_log: true
 
     - name: Create PostgreSQL databases
       community.postgresql.postgresql_db:
@@ -44,6 +164,9 @@
         encoding: 'UTF8'
         state: present
       loop: "{{ postgres.databases }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
 
     - name: Create PostgreSQL users
       community.postgresql.postgresql_user:
@@ -55,6 +178,9 @@
         role_attr_flags: "LOGIN"
         state: present
       loop: "{{ postgres.users }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
 
     - name: Attach priv to group roles on public schema
       community.postgresql.postgresql_privs:
@@ -63,10 +189,13 @@
         login_password: "{{ postgres.root.password }}"
         database: "{{ item.name }}"
         priv: ALL
-        type:  database
+        type: database
         role: "{{ item.name }}"
         state: present
       loop: "{{ postgres.users }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
 
     - name: Grant USAGE and CREATE privileges on schema public
       community.postgresql.postgresql_privs:
@@ -82,3 +211,4 @@
       loop: "{{ postgres.users }}"
       loop_control:
         label: "{{ item.name }}"
+      no_log: true

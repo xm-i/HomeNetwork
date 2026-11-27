@@ -20,7 +20,7 @@ ansible_user=pi
 db-server.internal
 
 [db:vars]
-ansible_user=db
+ansible_user=root
 
 [watch]
 watch-server.internal
