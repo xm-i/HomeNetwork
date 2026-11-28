@@ -1,0 +1,19 @@
+[Unit]
+Description=Tailscale Funnel for Jenkins GitHub Webhook
+After=network-online.target jenkins.service
+Wants=network-online.target jenkins.service
+
+[Service]
+Type=simple
+RuntimeDirectory=tailscale
+RuntimeDirectoryMode=0755
+EnvironmentFile=/opt/tailscale/env_file
+ExecStart=/usr/sbin/tailscaled --tun=userspace-networking --state=/opt/tailscale/state/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
+ExecStartPost=/opt/tailscale/configure-funnel.sh
+Restart=always
+RestartSec=10
+TimeoutStartSec=120
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -25,8 +25,9 @@
 10.0.3.4 game-server0.internal
 10.0.3.5 batch-server.internal
 10.0.3.6 pinpon-server.internal
-10.0.3.7 cicd.internal
+10.0.3.7 jenkins.internal
 10.0.3.8 dnsfilter.internal
 10.0.3.9 dashboard-ap.internal
 10.0.3.10 electric-power-monitor.internal
 10.0.3.11 home-automation.internal
+10.0.3.12 sonarqube.internal

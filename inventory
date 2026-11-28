@@ -58,11 +58,17 @@ pinpon-server.internal
 [pinpon:vars]
 ansible_user=root
 
-[cicd]
-cicd.internal
+[jenkins]
+jenkins.internal
 
-[cicd:vars]
-ansible_user=cicd
+[jenkins:vars]
+ansible_user=root
+
+[sonarqube]
+sonarqube.internal
+
+[sonarqube:vars]
+ansible_user=root
 
 [dnsfilter]
 dnsfilter.internal

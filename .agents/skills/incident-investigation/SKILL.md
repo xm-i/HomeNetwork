@@ -51,7 +51,7 @@ HomeNetwork 環境で障害・アラート・エラー・疎通不良などの�
 
 ## 2. SSH 接続ルール（Windows / PowerShell）
 
-- **接続先指定**: 原則として `~/.ssh/config` のホストエイリアスを使用する（例: `home`, `db`, `watch`, `batch`, `pinpon`, `cicd`, `dns`, `dnsfilter`, `aquarium`, `proxmox`, `recorder`）。
+- **接続先指定**: 原則として `~/.ssh/config` のホストエイリアスを使用する（例: `home`, `db`, `watch`, `batch`, `pinpon`, `jenkins`, `sonarqube`, `dns`, `dnsfilter`, `aquarium`, `proxmox`, `recorder`）。
 - **フォールバック**: DNS 障害などで名前解決できない場合やエイリアスが使えない場合は、`inventory` または [infrastructure-map.md](./references/infrastructure-map.md) の IP アドレスと `./ssh_keys/id_ed25519` を指定する。
   - 例: `ssh -i ./ssh_keys/id_ed25519 -o BatchMode=yes -o ConnectTimeout=5 dns@10.0.0.2 'systemctl status dnsmasq --no-pager'`
 - **安全な実行オプション**:
@@ -100,11 +100,11 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 home 'sudo -n tail -n 100 /var/log/ngin
 ssh -o BatchMode=yes -o ConnectTimeout=5 home 'ss -tulpn'
 ```
 
-#### コンテナ（Podman: `cicd`, `dnsfilter`）
+#### コンテナ（Podman: `dnsfilter`）
 ```powershell
-# Podman (rootful なサービスが多いため必要時は sudo -n を併用)
-ssh -o BatchMode=yes -o ConnectTimeout=5 cicd 'sudo -n podman ps -a'
-ssh -o BatchMode=yes -o ConnectTimeout=5 cicd 'sudo -n podman logs --tail 100 jenkins'
+# Podman (rootful なサービスのため必要時は sudo -n を併用)
+ssh -o BatchMode=yes -o ConnectTimeout=5 dnsfilter 'sudo -n podman ps -a'
+ssh -o BatchMode=yes -o ConnectTimeout=5 dnsfilter 'sudo -n podman logs --tail 100 dnsfilter'
 ```
 
 #### DNS / ネットワーク (`dns`, `dnsfilter`)

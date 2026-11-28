@@ -20,5 +20,7 @@
   import_playbook: ./batch_server.yaml
 - name: pinpon_server
   import_playbook: ./pinpon_server.yaml
-- name: cicd_server
-  import_playbook: ./cicd_server.yaml
+- name: sonarqube_server
+  import_playbook: ./sonarqube_server.yaml
+- name: jenkins_server
+  import_playbook: ./jenkins_server.yaml

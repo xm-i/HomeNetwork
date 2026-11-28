@@ -117,7 +117,7 @@ sh execute.sh
     ```
 
 - Jenkinsにパイプライン構築
-- jenkinsでデプロイ、ansible実行が出来るよう、CICDServerのknown_hostsにfingerprintを登録していく
+- jenkinsでデプロイ、ansible実行が出来るよう、JenkinsServerのknown_hostsにfingerprintを登録していく
 
     ```
     su jenkins
@@ -130,15 +130,15 @@ sh execute.sh
 
 # GitHub Webhook 連携 (Tailscale Funnel)
 
-`cicd.internal` 上の `tailscale-funnel.service`（Podman コンテナ）により、`/github-webhook/` のみを HTTPS で外部公開し、`http://127.0.0.1:8080/github-webhook/` へ転送します。RTX1210 のポート開放は不要で、Jenkins 管理画面は外部非公開のまま複数リポジトリで単一の Webhook URL を共用できます。
+`jenkins.internal` 上の `tailscale-funnel.service`（Tailscale userspace-networking / systemd）により、`/github-webhook/` のみを HTTPS で外部公開し、`http://127.0.0.1:8080/github-webhook/` へ転送します。RTX1210 のポート開放は不要で、Jenkins 管理画面は外部非公開のまま複数リポジトリで単一の Webhook URL を共用できます。
 
 ### 1. Tailscale 側の事前設定
 1. Tailscale 管理画面の **DNS** で **MagicDNS** と **HTTPS Certificates** を有効化します。
 2. **Access Controls** で Funnel が許可されていることを確認します（デフォルト ACL で許可済み）。
 3. **Settings → Keys → Generate auth key** で **Reusable** な Auth Key を発行します（必要に応じて Pre-approved を有効化）。
 
-### 2. `group_vars/cicd.yaml` に Auth Key を設定
-ローカルの `group_vars/cicd.yaml` および Jenkins の Managed Files（`08db25be-824e-4efb-8883-f9a0c9a39827`）に以下を追記してからデプロイします：
+### 2. `group_vars/jenkins.yaml` に Auth Key を設定
+ローカルの `group_vars/jenkins.yaml` および Jenkins の Managed Files（`08db25be-824e-4efb-8883-f9a0c9a39827`）に以下を追記してからデプロイします：
 
 ```yaml
 tailscale:
@@ -193,7 +193,8 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
   - batch-server
   - dns-server.internal (10.0.0.2 / DNS & DHCP)
   - pinpon-server (10.0.3.6 / Pinpon Web サービス)
-  - cicd.internal (10.0.3.7 / SonarQube / Jenkins / Tailscale Funnel)
+  - jenkins.internal (10.0.3.7 / Jenkins / Tailscale Funnel)
+  - sonarqube.internal (10.0.3.12 / SonarQube)
   - dnsfilter.internal (10.0.3.8 / DNS フィルタ・AdGuard Home)
   - aqua-raspi (アクアリウムIoT ※現在アラート対象外)
   - rtx1210 (10.0.0.1 / ルーター / SNMPポーリング & トラップ監視)

@@ -16,7 +16,8 @@
 | `watch` | `watch-server.internal` | `10.0.3.3` | `watch` (Ansible: `root`) | systemd: `prometheus` (:9090), `prometheus-alertmanager` (:9093), `grafana-server` (:3000), `prometheus-blackbox-exporter` (:9115), `prometheus-snmp-exporter` (:9116), `snmptrapd` (:162/udp), `recorder-exporter` (:9876), `prometheus-node-exporter` (:9100) | `/etc/prometheus/`, `/etc/grafana/provisioning/`, `/etc/watch_server/env_file`, `/opt/watch_server/` |
 | `batch` | `batch-server.internal` | `10.0.3.5` | `batch` (Ansible: `root`) | `rundeckd` (:4440), `prometheus-node-exporter` (:9100) | `/var/log/rundeck/` |
 | `pinpon` | `pinpon-server.internal` | `10.0.3.6` | `pinpon` (Ansible: `root`) | `pinpon` (:5000, .NET 10), `prometheus-node-exporter` (:9100) | `/opt/pinpon/`, `journalctl -u pinpon` |
-| `cicd` | `cicd.internal` | `10.0.3.7` | `cicd` | Podman 系 systemd: `jenkins` (:8080/:50000), `sonarqube` (:9000), `tailscale-funnel`, `prometheus-node-exporter` (:9100) | `/opt/jenkins/home`, `/opt/sonarqube/logs`, `/opt/tailscale/config/serve.json` |
+| `jenkins` | `jenkins.internal` | `10.0.3.7` | `root` | systemd: `jenkins` (:8080/:50000), `tailscale-funnel`, `prometheus-node-exporter` (:9100) | `/opt/jenkins/home`, `/opt/tailscale/configure-funnel.sh` |
+| `sonarqube` | `sonarqube.internal` | `10.0.3.12` | `sonar` (Ansible: `root`) | systemd: `sonarqube` (:9000), `prometheus-node-exporter` (:9100) | `/opt/sonarqube/logs`, `/opt/sonarqube/env_file` |
 | `recorder` | `recorder.internal` | `10.0.0.8` | `recorder` | EPGStation (:8888), Mirakurun (:40772) | `watch` 上の `recorder-exporter` 経由でも状態確認可 |
 | `proxmox`（旧 `kvm`） | `proxmox.internal`（旧 `kvm-host.internal`） | `10.0.0.7` | `root` | Proxmox VE 9.2 ハイパーバイザ, `prometheus-node-exporter` (:9100) | `qm list`, `pct list`, `vmbr0`, Web UI (`https://pve.home.internal/` / `:8006`) |
 | `aquarium` | `aqua-raspi.internal` | `10.0.0.11` | `pi` | `aqua_state_reporter`, `prometheus-node-exporter`（※現在監視アラート対象外） | `/home/pi/services/aqua_state_reporter/` |
@@ -38,8 +39,8 @@
 | `https://home.internal/` | `https://dashboard.home.internal/` へリダイレクト |
 | `https://dashboard.home.internal/` | `home` 上の `/var/www/html/dashboard`（静的配信） |
 | `https://dashboard-api.home.internal/` | `http://dashboard-ap.internal:5000` (`back_end_api.service`) |
-| `https://jenkins.home.internal/` | `http://cicd.internal:8080` (`jenkins.service`) |
-| `https://sonarqube.home.internal/` | `http://cicd.internal:9000` (`sonarqube.service` / DB: `db-server.internal:5432`) |
+| `https://jenkins.home.internal/` | `http://jenkins.internal:8080` (`jenkins.service`) |
+| `https://sonarqube.home.internal/` | `http://sonarqube.internal:9000` (`sonarqube.service` / DB: `db-server.internal:5432`) |
 | `https://monitor.home.internal/` / `https://grafana.home.internal/` | `http://watch-server.internal:3000` (`grafana-server.service`) |
 | `https://recorder.home.internal/`（および `:8888`） | `http://recorder.internal:8888` (EPGStation) |
 | `https://rundeck.home.internal/` | `http://batch-server.internal:4440` (`rundeckd.service`) |
@@ -64,7 +65,8 @@
   - `batch`: `rundeckd`
   - `pinpon`: `pinpon`
   - `watch`: `prometheus`, `prometheus-alertmanager`, `grafana-server`, `prometheus-blackbox-exporter`, `prometheus-snmp-exporter`, `snmptrapd`, `recorder-exporter`
-  - `cicd`: `sonarqube`, `jenkins`, `tailscale-funnel`
+  - `jenkins`: `jenkins`, `tailscale-funnel`
+  - `sonarqube`: `sonarqube`
   - `dnsfilter`: `dnsfilter`
 - `HttpsEndpointDown`: Blackbox Exporter の HTTPS プローブが 3 分以上失敗
 - `SslCertificateExpiringSoon`: TLS 証明書の残有効期限が 30 日未満
@@ -83,6 +85,7 @@
 3. **ホストごと疎通不可 (`HostDown`)**
    - `proxmox` (`10.0.0.7`, user: `root`) で `qm list` および `pct list` を確認し、VM / LXC 停止・ハングかネットワーク問題かを切り分け
 4. **Jenkins Webhook が届かない / CI 失敗**
-   - `cicd` の `jenkins.service` / `tailscale-funnel.service` と `podman logs`、SonarQube 利用時は `sonarqube.service` と `db` の PostgreSQL 疎通を確認
+   - `jenkins` の `jenkins.service` / `tailscale-funnel.service` の `journalctl` や `tailscale funnel status` を確認
+   - SonarQube 利用時は `sonarqube` (`10.0.3.12`) の `sonarqube.service` と `db` の PostgreSQL 疎通を確認
 5. **録画異常・予約競合アラート**
    - `watch` の `recorder-exporter` ログ、および `recorder` (`10.0.0.8`) の EPGStation / Mirakurun 稼働状況・ストレージ残量を確認
