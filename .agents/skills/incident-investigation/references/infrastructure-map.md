@@ -13,7 +13,7 @@
 | `electric-power-monitor` | `electric-power-monitor.internal` | `10.0.3.10` | `power` (Ansible: `root`) | `electric_power_monitor` (.NET 10, USB `/dev/ttyUSB0`), `prometheus-node-exporter` (:9100) | `/opt/electric-power-monitor-service/`, `journalctl -u electric_power_monitor` |
 | `home-automation` | `home-automation.internal` | `10.0.3.11` | `automation` (Ansible: `root`) | `home_automation` (.NET 10), `prometheus-node-exporter` (:9100) | `/opt/home-automation-service/`, `journalctl -u home_automation` |
 | `db` | `db-server.internal` | `10.0.3.2` | `db` (Ansible: `root`) | `postgresql` / `postgresql@*-main` (:5432), `prometheus-node-exporter` (:9100) | PostgreSQL ログ (`/var/log/postgresql/`), `db_server/docker/` |
-| `watch` | `watch-server.internal` | `10.0.3.3` | `watch` | `docker.service` (Compose: `prometheus`:9090, `alertmanager`:9093, `grafana`:3000, `blackbox-exporter`:9115, `snmp-exporter`:9116, `snmptrapd`:162/udp, `recorder-exporter`:9876), `prometheus-node-exporter` (:9100) | `/home/watch/docker/` (`docker-compose.yml`, `prometheus/`, `alertmanager/`, `grafana/`) |
+| `watch` | `watch-server.internal` | `10.0.3.3` | `watch` (Ansible: `root`) | systemd: `prometheus` (:9090), `prometheus-alertmanager` (:9093), `grafana-server` (:3000), `prometheus-blackbox-exporter` (:9115), `prometheus-snmp-exporter` (:9116), `snmptrapd` (:162/udp), `recorder-exporter` (:9876), `prometheus-node-exporter` (:9100) | `/etc/prometheus/`, `/etc/grafana/provisioning/`, `/etc/watch_server/env_file`, `/opt/watch_server/` |
 | `batch` | `batch-server.internal` | `10.0.3.5` | `batch` (Ansible: `root`) | `rundeckd` (:4440), `prometheus-node-exporter` (:9100) | `/var/log/rundeck/` |
 | `pinpon` | `pinpon-server.internal` | `10.0.3.6` | `pinpon` (Ansible: `root`) | `pinpon` (:5000, .NET 10), `prometheus-node-exporter` (:9100) | `/opt/pinpon/`, `journalctl -u pinpon` |
 | `cicd` | `cicd.internal` | `10.0.3.7` | `cicd` | Podman 系 systemd: `jenkins` (:8080/:50000), `sonarqube` (:9000), `tailscale-funnel`, `prometheus-node-exporter` (:9100) | `/opt/jenkins/home`, `/opt/sonarqube/logs`, `/opt/tailscale/config/serve.json` |
@@ -40,7 +40,7 @@
 | `https://dashboard-api.home.internal/` | `http://dashboard-ap.internal:5000` (`back_end_api.service`) |
 | `https://jenkins.home.internal/` | `http://cicd.internal:8080` (`jenkins.service`) |
 | `https://sonarqube.home.internal/` | `http://cicd.internal:9000` (`sonarqube.service` / DB: `db-server.internal:5432`) |
-| `https://monitor.home.internal/` / `https://grafana.home.internal/` | `http://watch-server.internal:3000` (`grafana` コンテナ) |
+| `https://monitor.home.internal/` / `https://grafana.home.internal/` | `http://watch-server.internal:3000` (`grafana-server.service`) |
 | `https://recorder.home.internal/`（および `:8888`） | `http://recorder.internal:8888` (EPGStation) |
 | `https://rundeck.home.internal/` | `http://batch-server.internal:4440` (`rundeckd.service`) |
 | `https://pinpon.home.internal/` | `http://pinpon-server.internal:5000` (`pinpon.service`) |
@@ -51,7 +51,7 @@
 
 ---
 
-## 3. Prometheus アラートルール概要（`watch_server/docker/prometheus/rules.yml`）
+## 3. Prometheus アラートルール概要（`watch_server/prometheus/rules.yml`）
 
 - `HostDown`: `node_exporter` が 3 分以上応答なし（`aqua-raspi.internal` 除外）
 - `SystemdServiceDown`: 主要 systemd ユニットが 2 分以上 `active` ではない
@@ -63,7 +63,7 @@
   - `dns`: `dnsmasq`, `dhcp_web`, `dhcp_assign_notifier`
   - `batch`: `rundeckd`
   - `pinpon`: `pinpon`
-  - `watch`: `docker`
+  - `watch`: `prometheus`, `prometheus-alertmanager`, `grafana-server`, `prometheus-blackbox-exporter`, `prometheus-snmp-exporter`, `snmptrapd`, `recorder-exporter`
   - `cicd`: `sonarqube`, `jenkins`, `tailscale-funnel`
   - `dnsfilter`: `dnsfilter`
 - `HttpsEndpointDown`: Blackbox Exporter の HTTPS プローブが 3 分以上失敗

@@ -204,19 +204,19 @@ Prometheus + Grafana + Node Exporter によるインフラメトリクス監視�
 
 ## 死活・サービス停止アラート (Prometheus + Alertmanager)
 
-`watch_server/docker/prometheus/rules.yml` および `watch_server/docker/alertmanager/alertmanager.yml` により、以下の異常検知と復旧通知を Slack へ送信します。
+`watch_server/prometheus/rules.yml` および `watch_server/alertmanager/alertmanager.yml` により、以下の異常検知と復旧通知を Slack へ送信します。
 
-- **通知先**: `watch_server/docker/env_file` の `ALERT_WEBHOOK_URL`（未設定時は `SNMP_TRAP_WEBHOOK_URL` にフォールバック）
+- **通知先**: `watch_server/env_file` の `ALERT_WEBHOOK_URL`（未設定時は `SNMP_TRAP_WEBHOOK_URL` にフォールバック）
 - **主なアラートルール**:
   - `HostDown`: `node` ジョブの `up == 0` が 3 分継続（`aqua-raspi.internal` 除外）
-  - `SystemdServiceDown`: `nginx` / `jenkins` / `tailscale-funnel` / `back_end_api` / `electric_power_monitor` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `docker` / `sonarqube` / `dnsfilter` の停止（2 分継続）
+  - `SystemdServiceDown`: `nginx` / `jenkins` / `tailscale-funnel` / `back_end_api` / `electric_power_monitor` / `home_automation` / `postgresql` / `dnsmasq` / `dhcp_web` / `dhcp_assign_notifier` / `rundeckd` / `pinpon` / `prometheus` / `prometheus-alertmanager` / `grafana-server` / `prometheus-blackbox-exporter` / `prometheus-snmp-exporter` / `snmptrapd` / `recorder-exporter` / `sonarqube` / `dnsfilter` の停止（2 分継続）
   - `HttpsEndpointDown`: Nginx 配下全 `*.home.internal` の HTTPS プローブ失敗（3 分継続）
   - `SslCertificateExpiringSoon`: TLS 証明書の残り有効期限が 30 日未満
   - `BlackboxExporterDown` / `RecorderExporterDown`: 各エクスポーターの取得失敗（3 分継続）
 
 ## 録画サーバー監視 (Recorder / EPGStation & Mirakurun)
 
-WatchServer 内の `recorder-exporter` コンテナが `recorder.internal` (10.0.0.8) の EPGStation および Mirakurun からメトリクスを自動収集します。
+WatchServer 内の `recorder-exporter` サービスが `recorder.internal` (10.0.0.8) の EPGStation および Mirakurun からメトリクスを自動収集します。
 
 - **Grafanaダッシュボード**: 「Recorder / 録画監視 (EPGStation & Mirakurun)」
 - **主な監視項目**:
@@ -228,7 +228,7 @@ WatchServer 内の `recorder-exporter` コンテナが `recorder.internal` (10.0
   - **ストレージ容量・使用率**: 録画保存先 (`recorded`) および一時録画領域 (`recording`) の残容量と使用率 (残100GB未満/95%以上で警告)
   - **Mirakurunエラー・ストリーム**: バッファオーバーフロー、チューナーデバイス再起動回数、アクティブストリーム数
 - **Webhook通知**:
-  - `watch_server/docker/env_file` の `ALERT_WEBHOOK_URL` (または `SNMP_TRAP_WEBHOOK_URL`) を設定すると、予約競合発生時、全チューナー利用不可時、ストレージ容量低下時、サービスダウン時に Discord / Slack へアラート通知が送信されます。
+  - `watch_server/env_file` の `ALERT_WEBHOOK_URL` (または `SNMP_TRAP_WEBHOOK_URL`) を設定すると、予約競合発生時、全チューナー利用不可時、ストレージ容量低下時、サービスダウン時に Discord / Slack へアラート通知が送信されます。
 
 ## ネットワーク機器・NASのSNMP設定
 
@@ -269,4 +269,4 @@ ADM（管理画面）の「サービス」→「SNMP」から以下を設定し�
   - トラップサーバーIP: `10.0.3.3`
   - コミュニティ: `public`
 
-※ Discord / Slack へのトラップ通知を行いたい場合は、`./watch_server/docker/env_file` の `SNMP_TRAP_WEBHOOK_URL` に Webhook URL を設定してください。
+※ Discord / Slack へのトラップ通知を行いたい場合は、`./watch_server/env_file` の `SNMP_TRAP_WEBHOOK_URL` に Webhook URL を設定してください。

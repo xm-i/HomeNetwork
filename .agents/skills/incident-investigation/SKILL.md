@@ -67,7 +67,7 @@ HomeNetwork 環境で障害・アラート・エラー・疎通不良などの�
 1. ユーザー報告から **症状・対象 URL / ホスト・発生時刻・エラーメッセージ・アラート内容** を整理する。
 2. [infrastructure-map.md](./references/infrastructure-map.md) および関連ファイルを確認し、依存経路を特定する。
    - Nginx ルーティング: `web_server/nginx/sites-available/default`
-   - アラートルール / 監視対象: `watch_server/docker/prometheus/rules.yml`, `watch_server/docker/prometheus/prometheus.yml`
+   - アラートルール / 監視対象: `watch_server/prometheus/rules.yml`, `watch_server/prometheus/prometheus.yml`
    - 各サーバー構成: `<server>_server.yaml`, `dns_server/dnsmasq/dnsmasq.conf`, `dns_server/dnsmasq/dnsmasq-hosts`
 
 ### Step 2: 監視基盤・外形状態の Read-Only 確認
@@ -75,7 +75,7 @@ HomeNetwork 環境で障害・アラート・エラー・疎通不良などの�
 
 - **WatchServer (`watch`) 経由でのアラート・ターゲット確認**:
   ```powershell
-  ssh -o BatchMode=yes -o ConnectTimeout=5 watch 'docker ps --format "table {{.Names}}\t{{.Status}}"'
+  ssh -o BatchMode=yes -o ConnectTimeout=5 watch 'systemctl status prometheus prometheus-alertmanager grafana-server prometheus-blackbox-exporter prometheus-snmp-exporter snmptrapd recorder-exporter --no-pager'
   ssh -o BatchMode=yes -o ConnectTimeout=5 watch 'curl -sS --max-time 5 http://localhost:9093/api/v2/alerts'
   ssh -o BatchMode=yes -o ConnectTimeout=5 watch 'curl -sS --max-time 5 http://localhost:9090/api/v1/alerts'
   ```
@@ -100,14 +100,11 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 home 'sudo -n tail -n 100 /var/log/ngin
 ssh -o BatchMode=yes -o ConnectTimeout=5 home 'ss -tulpn'
 ```
 
-#### コンテナ（Podman: `cicd`, `dnsfilter` / Docker: `watch`, `db`）
+#### コンテナ（Podman: `cicd`, `dnsfilter`）
 ```powershell
 # Podman (rootful なサービスが多いため必要時は sudo -n を併用)
 ssh -o BatchMode=yes -o ConnectTimeout=5 cicd 'sudo -n podman ps -a'
 ssh -o BatchMode=yes -o ConnectTimeout=5 cicd 'sudo -n podman logs --tail 100 jenkins'
-
-# Docker
-ssh -o BatchMode=yes -o ConnectTimeout=5 watch 'docker logs --tail 100 alertmanager'
 ```
 
 #### DNS / ネットワーク (`dns`, `dnsfilter`)

@@ -6,7 +6,7 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-            - 'alertmanager:9093'
+            - '127.0.0.1:9093'
 
 rule_files:
   - '/etc/prometheus/rules.yml'
@@ -14,7 +14,7 @@ rule_files:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['127.0.0.1:9090']
 
   - job_name: 'node'
     static_configs:
@@ -57,7 +57,7 @@ scrape_configs:
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: snmp-exporter:9116
+        replacement: 127.0.0.1:9116
 
   # SNMP: L2 Switches (NETGEAR / Yamaha SWX)
   - job_name: 'snmp_switch'
@@ -79,7 +79,7 @@ scrape_configs:
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: snmp-exporter:9116
+        replacement: 127.0.0.1:9116
 
   # SNMP: ASUSTOR NAS
   - job_name: 'snmp_nas'
@@ -102,7 +102,7 @@ scrape_configs:
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: snmp-exporter:9116
+        replacement: 127.0.0.1:9116
 
   # Recorder: EPGStation & Mirakurun
   - job_name: 'recorder'
@@ -110,7 +110,7 @@ scrape_configs:
     scrape_timeout: 10s
     static_configs:
       - targets:
-          - 'recorder-exporter:9876'
+          - '127.0.0.1:9876'
         labels:
           device: 'recorder'
           role: 'recorder'
@@ -121,7 +121,7 @@ scrape_configs:
     scrape_interval: 15s
     static_configs:
       - targets:
-          - 'blackbox-exporter:9115'
+          - '127.0.0.1:9115'
 
   # HTTPS 外形監視 (home.internal Nginx 配下)
   - job_name: 'blackbox_https'
@@ -151,7 +151,7 @@ scrape_configs:
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: blackbox-exporter:9115
+        replacement: 127.0.0.1:9115
 
   # HTTPS 外形監視 (ルートが 404 を返す API サーバー向け)
   - job_name: 'blackbox_https_api'
@@ -171,4 +171,4 @@ scrape_configs:
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: blackbox-exporter:9115
+        replacement: 127.0.0.1:9115

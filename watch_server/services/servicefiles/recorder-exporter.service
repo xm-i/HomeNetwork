@@ -1,0 +1,23 @@
+[Unit]
+Description=Recorder Prometheus Exporter (EPGStation & Mirakurun)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=watch
+Group=watch
+WorkingDirectory=/opt/watch_server/recorder_exporter
+EnvironmentFile=/etc/watch_server/env_file
+Environment=PYTHONUNBUFFERED=1
+Environment=TZ=Asia/Tokyo
+Environment=EPGSTATION_URL=http://recorder.internal:8888
+Environment=MIRAKURUN_URL=http://recorder.internal:40772
+Environment=PORT=9876
+Environment=SCRAPE_INTERVAL=15
+ExecStart=/usr/bin/python3 /opt/watch_server/recorder_exporter/exporter.py
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

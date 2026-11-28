@@ -1,95 +1,444 @@
 - hosts: watch
-  become: yes
-  remote_user: watch
+  become: no
+  remote_user: root
   gather_facts: no
+
   tasks:
     - name: Set timezone
       timezone:
         name: Asia/Tokyo
 
-    - name: Remove legacy docker-compose (v1)
-      apt:
-        name: docker-compose
-        state: absent
+    - name: Ensure watch group exists
+      group:
+        name: watch
+        state: present
 
-    - name: Install apt packages
+    - name: Ensure watch user exists
+      user:
+        name: watch
+        group: watch
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Allow passwordless sudo for watch user
+      copy:
+        dest: /etc/sudoers.d/watch
+        content: "watch ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Check if root authorized_keys exists
+      stat:
+        path: /root/.ssh/authorized_keys
+      register: root_authorized_keys
+
+    - name: Ensure watch .ssh directory exists
+      file:
+        path: /home/watch/.ssh
+        state: directory
+        owner: watch
+        group: watch
+        mode: "0700"
+
+    - name: Sync SSH authorized_keys from root to watch
+      copy:
+        src: /root/.ssh/authorized_keys
+        dest: /home/watch/.ssh/authorized_keys
+        remote_src: yes
+        owner: watch
+        group: watch
+        mode: "0600"
+      when: root_authorized_keys.stat.exists
+
+    - name: Install monitoring and exporter apt packages
       apt:
         name:
-          - docker.io
-          - docker-compose-v2
+          - prometheus
+          - prometheus-alertmanager
+          - prometheus-blackbox-exporter
+          - prometheus-snmp-exporter
           - prometheus-node-exporter
+          - snmptrapd
+          - python3
+          - curl
+          - gnupg
+          - ca-certificates
         state: present
         update_cache: yes
 
-    - name: Ensure prometheus-node-exporter is enabled and started
-      service:
-        name: prometheus-node-exporter
-        enabled: yes
-        state: started
+    - name: Ensure apt keyrings directory exists
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
 
-    - name: Ensure docker service is running
-      service:
-        name: docker
-        state: started
-        enabled: yes
+    - name: Download Grafana APT repository GPG key
+      get_url:
+        url: https://apt.grafana.com/gpg.key
+        dest: /etc/apt/keyrings/grafana.asc
+        owner: root
+        group: root
+        mode: "0644"
 
-    - name: Create docker directories
+    - name: Configure Grafana APT repository
+      copy:
+        dest: /etc/apt/sources.list.d/grafana.list
+        content: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main\n"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Install Grafana package
+      apt:
+        name: grafana
+        state: present
+        update_cache: yes
+
+    - name: Disable unused snmpd service
+      service:
+        name: snmpd
+        enabled: no
+        state: stopped
+      failed_when: false
+
+    - name: Create WatchServer directories
       file:
         path: "{{ item.path }}"
         state: directory
         owner: "{{ item.owner }}"
         group: "{{ item.group }}"
         mode: "{{ item.mode }}"
-      with_items:
-        - {
-            path: /home/watch/docker,
-            owner: watch,
-            group: watch,
-            mode: "0755",
-          }
-        - {
-            path: /home/watch/docker/data/grafana,
-            owner: watch,
-            group: watch,
-            mode: "0777",
-          }
-        - {
-            path: /home/watch/docker/data/prometheus,
-            owner: watch,
-            group: watch,
-            mode: "0777",
-          }
-        - {
-            path: /home/watch/docker/data/alertmanager,
-            owner: watch,
-            group: watch,
-            mode: "0777",
-          }
+      loop:
+        - { path: /etc/watch_server, owner: root, group: root, mode: "0750" }
+        - { path: /opt/watch_server, owner: root, group: root, mode: "0755" }
+        - { path: /opt/watch_server/recorder_exporter, owner: watch, group: watch, mode: "0755" }
+        - { path: /opt/watch_server/snmptrapd, owner: root, group: root, mode: "0755" }
+        - { path: /etc/snmp/mibs, owner: root, group: root, mode: "0755" }
+        - { path: /etc/systemd/system/prometheus-alertmanager.service.d, owner: root, group: root, mode: "0755" }
+        - { path: /etc/systemd/system/snmptrapd.service.d, owner: root, group: root, mode: "0755" }
+        - { path: /etc/systemd/system/grafana-server.service.d, owner: root, group: root, mode: "0755" }
 
-    - name: Ensure env_file exists from default if missing
+    - name: Check if local watch_server/env_file exists
+      stat:
+        path: ./watch_server/env_file
+      delegate_to: localhost
+      register: watch_local_env_file
+
+    - name: Seed env_file from default if missing
       copy:
-        src: ./watch_server/docker/env_file_default
-        dest: /home/watch/docker/env_file
+        src: ./watch_server/env_file_default
+        dest: /etc/watch_server/env_file
         force: no
-        owner: watch
-        group: watch
+        owner: root
+        group: root
         mode: "0600"
 
-    - name: Copy docker files
+    - name: Copy WatchServer env_file
       copy:
-        src: ./watch_server/docker/
-        dest: /home/watch/docker/
+        src: ./watch_server/env_file
+        dest: /etc/watch_server/env_file
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+      when: watch_local_env_file.stat.exists
       notify:
-        - restart watch containers
+        - restart alertmanager
+        - restart grafana-server
+        - restart snmptrapd
+        - restart recorder-exporter
 
-    - name: Run docker-compose
-      command: docker compose up -d --build --remove-orphans
-      args:
-        chdir: /home/watch/docker
+    - name: Check if Alertmanager webhook URL is configured
+      command: grep -Eq "^(ALERT_WEBHOOK_URL|SNMP_TRAP_WEBHOOK_URL)=.+" /etc/watch_server/env_file
+      register: alertmanager_webhook_check
+      failed_when: false
       changed_when: false
+      no_log: true
+
+    - name: Copy Prometheus configuration
+      copy:
+        src: ./watch_server/prometheus/prometheus.yml
+        dest: /etc/prometheus/prometheus.yml
+        owner: root
+        group: prometheus
+        mode: "0644"
+      notify:
+        - restart prometheus
+
+    - name: Copy Prometheus alert rules
+      copy:
+        src: ./watch_server/prometheus/rules.yml
+        dest: /etc/prometheus/rules.yml
+        owner: root
+        group: prometheus
+        mode: "0644"
+      notify:
+        - restart prometheus
+
+    - name: Configure Prometheus daemon arguments
+      copy:
+        dest: /etc/default/prometheus
+        content: |
+          ARGS="--config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus/metrics2 --storage.tsdb.retention.time=30d --web.enable-lifecycle"
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - restart prometheus
+
+    - name: Copy Alertmanager configuration
+      copy:
+        src: ./watch_server/alertmanager/alertmanager.yml
+        dest: /etc/prometheus/alertmanager.yml
+        owner: root
+        group: prometheus
+        mode: "0644"
+      notify:
+        - restart alertmanager
+
+    - name: Configure Alertmanager daemon arguments
+      copy:
+        dest: /etc/default/prometheus-alertmanager
+        content: |
+          ARGS="--config.file=/etc/prometheus/alertmanager.yml --storage.path=/var/lib/prometheus/alertmanager --web.external-url=http://watch-server.internal:9093/"
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - restart alertmanager
+
+    - name: Configure Alertmanager systemd drop-in
+      copy:
+        dest: /etc/systemd/system/prometheus-alertmanager.service.d/override.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Service]
+          EnvironmentFile=/etc/watch_server/env_file
+          RuntimeDirectory=prometheus-alertmanager
+          RuntimeDirectoryMode=0750
+          ExecStartPre=/bin/sh -c 'WEBHOOK="${ALERT_WEBHOOK_URL:-${SNMP_TRAP_WEBHOOK_URL}}"; if [ -z "$WEBHOOK" ]; then echo "ERROR: ALERT_WEBHOOK_URL and SNMP_TRAP_WEBHOOK_URL are both empty." >&2; exit 1; fi; printf "%s" "$WEBHOOK" > /run/prometheus-alertmanager/slack_webhook_url && chmod 600 /run/prometheus-alertmanager/slack_webhook_url'
+      notify:
+        - reload systemd
+        - restart alertmanager
+
+    - name: Copy Blackbox Exporter configuration
+      copy:
+        src: ./watch_server/blackbox_exporter/blackbox.yml
+        dest: /etc/prometheus/blackbox.yml
+        owner: root
+        group: prometheus
+        mode: "0644"
+      notify:
+        - restart blackbox-exporter
+
+    - name: Configure Blackbox Exporter daemon arguments
+      copy:
+        dest: /etc/default/prometheus-blackbox-exporter
+        content: |
+          ARGS="--config.file=/etc/prometheus/blackbox.yml"
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - restart blackbox-exporter
+
+    - name: Copy SNMP Exporter configuration
+      copy:
+        src: ./watch_server/snmp_exporter/snmp.yml
+        dest: /etc/prometheus/snmp.yml
+        owner: root
+        group: prometheus
+        mode: "0644"
+      notify:
+        - restart snmp-exporter
+
+    - name: Configure SNMP Exporter daemon arguments
+      copy:
+        dest: /etc/default/prometheus-snmp-exporter
+        content: |
+          ARGS="--config.file=/etc/prometheus/snmp.yml"
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - restart snmp-exporter
+
+    - name: Copy custom MIB files
+      copy:
+        src: ./watch_server/mibs/
+        dest: /etc/snmp/mibs/
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - restart snmptrapd
+
+    - name: Copy snmptrapd notification script
+      copy:
+        src: ./watch_server/snmptrapd/notify.py
+        dest: /opt/watch_server/snmptrapd/notify.py
+        owner: root
+        group: root
+        mode: "0755"
+      notify:
+        - restart snmptrapd
+
+    - name: Copy snmptrapd configuration
+      copy:
+        src: ./watch_server/snmptrapd/snmptrapd.conf
+        dest: /etc/snmp/snmptrapd.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - restart snmptrapd
+
+    - name: Configure snmptrapd systemd drop-in
+      copy:
+        dest: /etc/systemd/system/snmptrapd.service.d/override.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Service]
+          EnvironmentFile=/etc/watch_server/env_file
+          Environment=TZ=Asia/Tokyo
+          ExecStart=
+          ExecStart=/usr/sbin/snmptrapd -f -Lo -C -c /etc/snmp/snmptrapd.conf -M /usr/share/snmp/mibs:/etc/snmp/mibs -m ALL
+      notify:
+        - reload systemd
+        - restart snmptrapd
+
+    - name: Copy recorder-exporter script
+      copy:
+        src: ./watch_server/recorder_exporter/exporter.py
+        dest: /opt/watch_server/recorder_exporter/exporter.py
+        owner: watch
+        group: watch
+        mode: "0755"
+      notify:
+        - restart recorder-exporter
+
+    - name: Copy recorder-exporter systemd service file
+      copy:
+        src: ./watch_server/services/servicefiles/recorder-exporter.service
+        dest: /etc/systemd/system/recorder-exporter.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - reload systemd
+        - restart recorder-exporter
+
+    - name: Copy Grafana provisioning files
+      copy:
+        src: ./watch_server/grafana/provisioning/
+        dest: /etc/grafana/provisioning/
+        owner: root
+        group: grafana
+      notify:
+        - restart grafana-server
+
+    - name: Configure Grafana systemd drop-in
+      copy:
+        dest: /etc/systemd/system/grafana-server.service.d/override.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Service]
+          EnvironmentFile=/etc/watch_server/env_file
+          Environment=GF_SERVER_ROOT_URL=http://monitor.home.internal/
+          Environment=GF_SECURITY_ADMIN_USER=admin
+          Environment=GF_SECURITY_ADMIN_PASSWORD=admin
+          Environment=GF_USERS_ALLOW_SIGN_UP=false
+      notify:
+        - reload systemd
+        - restart grafana-server
+
+    - name: Flush handlers before ensuring service states
+      meta: flush_handlers
+
+    - name: Ensure monitoring services are enabled and started
+      service:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop:
+        - prometheus-node-exporter
+        - prometheus-blackbox-exporter
+        - prometheus-snmp-exporter
+        - snmptrapd
+        - recorder-exporter
+        - prometheus
+        - grafana-server
+
+    - name: Enable prometheus-alertmanager service
+      service:
+        name: prometheus-alertmanager
+        enabled: yes
+
+    - name: Start prometheus-alertmanager if webhook URL is configured
+      service:
+        name: prometheus-alertmanager
+        state: started
+      when: alertmanager_webhook_check.rc == 0
+
+    - name: Notice if Alertmanager webhook URL is not configured
+      debug:
+        msg: "Neither ALERT_WEBHOOK_URL nor SNMP_TRAP_WEBHOOK_URL is set in /etc/watch_server/env_file; skipping prometheus-alertmanager startup."
+      when: alertmanager_webhook_check.rc != 0
 
   handlers:
-    - name: restart watch containers
-      command: docker compose up -d --build --force-recreate --remove-orphans
-      args:
-        chdir: /home/watch/docker
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart prometheus
+      systemd:
+        name: prometheus
+        state: restarted
+
+    - name: restart alertmanager
+      systemd:
+        name: prometheus-alertmanager
+        state: restarted
+        daemon_reload: yes
+      when: alertmanager_webhook_check.rc == 0
+
+    - name: restart blackbox-exporter
+      systemd:
+        name: prometheus-blackbox-exporter
+        state: restarted
+
+    - name: restart snmp-exporter
+      systemd:
+        name: prometheus-snmp-exporter
+        state: restarted
+
+    - name: restart snmptrapd
+      systemd:
+        name: snmptrapd
+        state: restarted
+        daemon_reload: yes
+
+    - name: restart recorder-exporter
+      systemd:
+        name: recorder-exporter
+        state: restarted
+        daemon_reload: yes
+
+    - name: restart grafana-server
+      systemd:
+        name: grafana-server
+        state: restarted
+        daemon_reload: yes

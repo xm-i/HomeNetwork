@@ -18,7 +18,7 @@ inhibit_rules:
 receivers:
   - name: 'slack-notifications'
     slack_configs:
-      - api_url_file: '/tmp/slack_webhook_url'
+      - api_url_file: '/run/prometheus-alertmanager/slack_webhook_url'
         channel: '#エラー通知'
         send_resolved: true
         username: 'Alertmanager'

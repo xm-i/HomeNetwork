@@ -44,7 +44,7 @@ ansible_user=root
 watch-server.internal
 
 [watch:vars]
-ansible_user=watch
+ansible_user=root
 
 [batch]
 batch-server.internal
