@@ -1,21 +1,14 @@
 [Unit]
-Description=DNS Filter Service (AdGuard Home / Podman)
+Description=DNS Filter Service (AdGuard Home)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
+ExecStart=/opt/dnsfilter/bin/AdGuardHome --no-check-update -c /opt/dnsfilter/conf/AdGuardHome.yaml -w /opt/dnsfilter/work
 Restart=always
-RestartSec=10
-TimeoutStartSec=300
-TimeoutStopSec=45
-ExecStartPre=-/usr/bin/podman rm -f dnsfilter
-ExecStart=/usr/bin/podman run --rm --name dnsfilter \
-  --network=host \
-  -v /opt/dnsfilter/work:/opt/adguardhome/work \
-  -v /opt/dnsfilter/conf:/opt/adguardhome/conf \
-  docker.io/adguard/adguardhome:latest
-ExecStop=/usr/bin/podman stop -t 30 dnsfilter
+RestartSec=5
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target

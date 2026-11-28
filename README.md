@@ -15,10 +15,10 @@ Ansibleを使いネットワークまわりの設定を行う。
 
 ## DNS Filter Server (dnsfilter.internal / 現行実装: AdGuard Home)
 
-1. Proxmox VMを作成し、Ubuntuをインストールする（ユーザー名: `dnsfilter`、ホスト名: `dnsfilter`）。
-2. ネットワーク設定を行う。
-    - IPアドレスは `10.0.3.8/20`（Gateway: `10.0.0.1`、DNS: `10.0.0.2`）で固定しておく。
-    - 公開鍵認証で `dnsfilter` ユーザーにログインできるようにする（全サーバー共通の公開鍵を `~/.ssh/authorized_keys` に保存）。
+1. Proxmox Unprivileged LXC を作成し、Ubuntu 26.04 を適用する（ホスト名: `DnsFilterServer`、MAC: `52:54:00:68:37:DE`）。
+2. ネットワーク・SSH 設定を行う。
+    - IPアドレスは DHCP（`dnsmasq.conf` により `10.0.3.8/20` を固定配布）で取得する。
+    - 公開鍵認証で `root` ユーザーにログインできるようにする（全サーバー共通の公開鍵を `/root/.ssh/authorized_keys` に保存）。
 3. （任意）NAS (`nas.internal`) 側に設定バックアップ用の rsync モジュール `dnsfilter_backup` を作成する。
 4. （再構築時など）MACアドレスが変わった場合は `dns_server/dnsmasq/dnsmasq.conf` の `# DNSFilter-Server` の `dhcp-host` 行を更新する。
 

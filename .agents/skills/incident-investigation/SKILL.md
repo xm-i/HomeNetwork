@@ -100,13 +100,6 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 home 'sudo -n tail -n 100 /var/log/ngin
 ssh -o BatchMode=yes -o ConnectTimeout=5 home 'ss -tulpn'
 ```
 
-#### コンテナ（Podman: `dnsfilter`）
-```powershell
-# Podman (rootful なサービスのため必要時は sudo -n を併用)
-ssh -o BatchMode=yes -o ConnectTimeout=5 dnsfilter 'sudo -n podman ps -a'
-ssh -o BatchMode=yes -o ConnectTimeout=5 dnsfilter 'sudo -n podman logs --tail 100 dnsfilter'
-```
-
 #### DNS / ネットワーク (`dns`, `dnsfilter`)
 ```powershell
 ssh -o BatchMode=yes -o ConnectTimeout=5 dns 'systemctl status dnsmasq dhcp_web dhcp_assign_notifier --no-pager'

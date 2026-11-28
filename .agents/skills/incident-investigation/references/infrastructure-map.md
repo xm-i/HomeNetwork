@@ -7,7 +7,7 @@
 | エイリアス | FQDN | IP | SSH ユーザー | 主な稼働サービス / コンテナ | 主な設定・確認先 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `dns` | `dns-server.internal` | `10.0.0.2` | `dns` | `dnsmasq`, `dhcp_web` (:80), `dhcp_assign_notifier`, `prometheus-node-exporter` (:9100) | `/etc/dnsmasq.conf`, `/etc/dnsmasq-hosts`, `/var/lib/misc/dnsmasq.leases`, `/home/dns/services/` |
-| `dnsfilter` | `dnsfilter.internal` | `10.0.3.8` | `dnsfilter` | `dnsfilter.service` (Podman: `dnsfilter` / AdGuard Home, `:3000`, `:53`), `prometheus-node-exporter` (:9100) | `/opt/dnsfilter/conf/AdGuardHome.yaml`, `/opt/dnsfilter/work/`, `/opt/dnsfilter/scripts/update_280blocker.py` |
+| `dnsfilter` | `dnsfilter.internal` | `10.0.3.8` | `dnsfilter` (Ansible: `root`) | systemd: `dnsfilter` (AdGuard Home, `:3000`, `:53`), `prometheus-node-exporter` (:9100) | `/opt/dnsfilter/conf/AdGuardHome.yaml`, `/opt/dnsfilter/work/`, `/opt/dnsfilter/scripts/update_280blocker.py` |
 | `home` | `home.internal` | `10.0.3.1` | `web` (Ansible: `root`) | `nginx` (:80/:443), `prometheus-node-exporter` (:9100) | `/etc/nginx/sites-available/default`, `/etc/nginx/certs/`, `/var/log/nginx/`, `/var/www/html/dashboard` |
 | `dashboard-ap` | `dashboard-ap.internal` | `10.0.3.9` | `dashboard` (Ansible: `root`) | `back_end_api` (:5000, .NET 10), `prometheus-node-exporter` (:9100) | `/opt/back-end-api-service/`, `journalctl -u back_end_api` |
 | `electric-power-monitor` | `electric-power-monitor.internal` | `10.0.3.10` | `power` (Ansible: `root`) | `electric_power_monitor` (.NET 10, USB `/dev/ttyUSB0`), `prometheus-node-exporter` (:9100) | `/opt/electric-power-monitor-service/`, `journalctl -u electric_power_monitor` |
@@ -81,7 +81,7 @@
    - 転送先ホストの対象サービス / コンテナ稼働状態とポート待受 (`ss -tulpn`) を確認
 2. **名前解決できない / ネットに繋がらない**
    - IP 直指定 (`10.0.0.2`) で `dns` の `dnsmasq` 状態・`/etc/dnsmasq-hosts` を確認
-   - DHCP 動的クライアント経由の広告ブロック影響なら `dnsfilter` (`10.0.3.8`) の `dnsfilter.service` / Podman ログ・`AdGuardHome.yaml` を確認
+   - DHCP 動的クライアント経由の広告ブロック影響なら `dnsfilter` (`10.0.3.8`) の `dnsfilter.service` / `journalctl -u dnsfilter`・`AdGuardHome.yaml` を確認
 3. **ホストごと疎通不可 (`HostDown`)**
    - `proxmox` (`10.0.0.7`, user: `root`) で `qm list` および `pct list` を確認し、VM / LXC 停止・ハングかネットワーク問題かを切り分け
 4. **Jenkins Webhook が届かない / CI 失敗**

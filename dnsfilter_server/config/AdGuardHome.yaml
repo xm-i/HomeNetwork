@@ -90,7 +90,7 @@ filtering:
   safebrowsing_block_host: standard-block.dns.adguard.com
   rewrites: []
   safe_fs_patterns:
-    - /opt/adguardhome/work/userfilters/*
+    - /opt/dnsfilter/work/userfilters/*
   safebrowsing_cache_size: 1048576
   safebrowsing_enabled: false
   parental_enabled: false
@@ -107,7 +107,7 @@ filters:
     name: AdGuard DNS filter
     id: 1
   - enabled: true
-    url: /opt/adguardhome/work/userfilters/280blocker.txt
+    url: /opt/dnsfilter/work/userfilters/280blocker.txt
     name: 280blocker (AdGuard format)
     id: 2
 whitelist_filters: []

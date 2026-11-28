@@ -1,16 +1,62 @@
 - hosts: dnsfilter
-  become: yes
-  remote_user: dnsfilter
+  become: no
+  remote_user: root
   gather_facts: no
+
+  vars:
+    adguardhome_version: "v1.0.0"
 
   tasks:
     - name: Set timezone
       timezone:
         name: Asia/Tokyo
 
-    - name: Set hostname
-      hostname:
+    - name: Ensure dnsfilter group exists
+      group:
         name: dnsfilter
+        state: present
+
+    - name: Ensure dnsfilter user exists
+      user:
+        name: dnsfilter
+        group: dnsfilter
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Allow passwordless sudo for dnsfilter user
+      copy:
+        dest: /etc/sudoers.d/dnsfilter
+        content: "dnsfilter ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Check if root authorized_keys exists
+      stat:
+        path: /root/.ssh/authorized_keys
+      register: root_authorized_keys
+
+    - name: Ensure dnsfilter .ssh directory exists
+      file:
+        path: /home/dnsfilter/.ssh
+        state: directory
+        owner: dnsfilter
+        group: dnsfilter
+        mode: "0700"
+
+    - name: Sync SSH authorized_keys from root to dnsfilter
+      copy:
+        src: /root/.ssh/authorized_keys
+        dest: /home/dnsfilter/.ssh/authorized_keys
+        remote_src: yes
+        owner: dnsfilter
+        group: dnsfilter
+        mode: "0600"
+      when: root_authorized_keys.stat.exists
 
     - name: Disable DNSStubListener in systemd-resolved (to free port 53 for DNS filter)
       lineinfile:
@@ -33,10 +79,12 @@
     - name: Install apt packages
       apt:
         name:
-          - podman
+          - ca-certificates
+          - curl
           - prometheus-node-exporter
           - python3
           - rsync
+          - tar
         state: present
         update_cache: yes
 
@@ -55,10 +103,39 @@
         mode: "{{ item.mode }}"
       loop:
         - { path: /opt/dnsfilter, mode: "0755" }
+        - { path: /opt/dnsfilter/bin, mode: "0755" }
         - { path: /opt/dnsfilter/conf, mode: "0755" }
         - { path: /opt/dnsfilter/work, mode: "0755" }
         - { path: /opt/dnsfilter/work/userfilters, mode: "0755" }
         - { path: /opt/dnsfilter/scripts, mode: "0755" }
+
+    - name: Check if AdGuard Home binary is installed
+      stat:
+        path: "/opt/dnsfilter/bin/AdGuardHome-{{ adguardhome_version }}"
+      register: adguardhome_bin
+
+    - name: Download AdGuard Home release archive
+      get_url:
+        url: "https://github.com/AdguardTeam/AdGuardHome/releases/download/{{ adguardhome_version }}/AdGuardHome_linux_amd64.tar.gz"
+        dest: "/tmp/AdGuardHome-{{ adguardhome_version }}.tar.gz"
+        mode: "0644"
+      when: not adguardhome_bin.stat.exists
+
+    - name: Install AdGuard Home binary
+      shell: |
+        rm -rf /tmp/adguardhome-extract && \
+        mkdir -p /tmp/adguardhome-extract && \
+        tar -xzf "/tmp/AdGuardHome-{{ adguardhome_version }}.tar.gz" -C /tmp/adguardhome-extract && \
+        install -m 0755 /tmp/adguardhome-extract/AdGuardHome/AdGuardHome "/opt/dnsfilter/bin/AdGuardHome-{{ adguardhome_version }}" && \
+        rm -rf /tmp/adguardhome-extract "/tmp/AdGuardHome-{{ adguardhome_version }}.tar.gz"
+      when: not adguardhome_bin.stat.exists
+
+    - name: Link active AdGuard Home binary
+      file:
+        src: "/opt/dnsfilter/bin/AdGuardHome-{{ adguardhome_version }}"
+        dest: /opt/dnsfilter/bin/AdGuardHome
+        state: link
+      register: adguardhome_link
 
     - name: Copy 280blocker update script
       copy:
@@ -82,6 +159,13 @@
         mode: "0600"
         force: no
 
+    - name: Migrate legacy container work paths in AdGuardHome.yaml
+      replace:
+        path: /opt/dnsfilter/conf/AdGuardHome.yaml
+        regexp: '/opt/adguardhome/work/'
+        replace: '/opt/dnsfilter/work/'
+      register: adguardhome_path_migrated
+
     - name: Copy dnsfilter systemd service file
       copy:
         src: ./dnsfilter_server/services/servicefiles/dnsfilter.service
@@ -103,12 +187,12 @@
         state: started
       register: dnsfilter_started
 
-    - name: Restart dnsfilter service if unit file changed
+    - name: Restart dnsfilter service when unit, binary, or config path changed
       systemd:
         name: dnsfilter
         state: restarted
         daemon_reload: yes
-      when: dnsfilter_service_copy.changed and not dnsfilter_started.changed
+      when: (dnsfilter_service_copy.changed or adguardhome_link.changed or adguardhome_path_migrated.changed) and not dnsfilter_started.changed
 
     - name: Add daily 280blocker update cron job
       cron:
