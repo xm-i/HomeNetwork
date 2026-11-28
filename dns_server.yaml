@@ -1,21 +1,73 @@
 - hosts: dns
-  become: yes
-  remote_user: dns
+  become: no
+  remote_user: root
   gather_facts: no
+
   tasks:
     - name: Set timezone
       timezone:
         name: Asia/Tokyo
 
-    - name: Set hostname
-      hostname:
-        name: dns-server
+    - name: Ensure dns group exists
+      group:
+        name: dns
+        state: present
+
+    - name: Ensure dns user exists
+      user:
+        name: dns
+        group: dns
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Allow passwordless sudo for dns user
+      copy:
+        dest: /etc/sudoers.d/dns
+        content: "dns ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Check if root authorized_keys exists
+      stat:
+        path: /root/.ssh/authorized_keys
+      register: root_authorized_keys
+
+    - name: Ensure dns .ssh directory exists
+      file:
+        path: /home/dns/.ssh
+        state: directory
+        owner: dns
+        group: dns
+        mode: "0700"
+
+    - name: Sync SSH authorized_keys from root to dns
+      copy:
+        src: /root/.ssh/authorized_keys
+        dest: /home/dns/.ssh/authorized_keys
+        remote_src: yes
+        owner: dns
+        group: dns
+        mode: "0600"
+      when: root_authorized_keys.stat.exists
 
     - name: Disable DNSStubListener in systemd-resolved (to free port 53 for dnsmasq)
       lineinfile:
         path: /etc/systemd/resolved.conf
         regexp: '^#?DNSStubListener='
         line: 'DNSStubListener=no'
+      notify:
+        - restart systemd-resolved
+
+    - name: Configure upstream DNS in systemd-resolved (required for static-IP LXC)
+      lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: '^#?DNS='
+        line: 'DNS=1.1.1.1 8.8.8.8'
       notify:
         - restart systemd-resolved
 
@@ -29,7 +81,7 @@
     - name: Flush handlers to apply systemd-resolved changes before dnsmasq install
       meta: flush_handlers
 
-    - name: "Install apt packages"
+    - name: Install apt packages
       apt:
         name:
           - dnsmasq
@@ -49,15 +101,17 @@
       copy:
         src: ./dns_server/dnsmasq/dnsmasq.conf
         dest: /etc/dnsmasq.conf
-      notify:
-        - restart dnsmasq
+      register: dnsmasq_conf_copy
 
     - name: Copy dnsmasq-hosts
       copy:
         src: ./dns_server/dnsmasq/dnsmasq-hosts
         dest: /etc/dnsmasq-hosts
-      notify:
-        - restart dnsmasq
+      register: dnsmasq_hosts_copy
+
+    - name: Validate dnsmasq configuration syntax
+      command: dnsmasq --test
+      changed_when: false
 
     - name: Ensure /var/lib/misc directory exists (for dnsmasq.leases)
       file:
@@ -71,6 +125,19 @@
         dest: /var/lib/misc/dnsmasq.leases
         force: no
         mode: "0644"
+
+    - name: Ensure dnsmasq is enabled and started
+      service:
+        name: dnsmasq
+        enabled: yes
+        state: started
+      register: dnsmasq_started
+
+    - name: Restart dnsmasq when configuration changed
+      service:
+        name: dnsmasq
+        state: restarted
+      when: (dnsmasq_conf_copy.changed or dnsmasq_hosts_copy.changed) and not dnsmasq_started.changed
 
     - name: mkdir /var/lib/myscripts/
       file:
@@ -107,9 +174,7 @@
         owner: dns
         group: dns
         mode: "0755"
-      notify:
-        - reload systemd
-        - restart dhcp_assign_notifier
+      register: notifier_copy
 
     - name: Copy dhcp_web (Python-based Web UI)
       copy:
@@ -118,9 +183,7 @@
         owner: dns
         group: dns
         mode: "0755"
-      notify:
-        - reload systemd
-        - restart dhcp_web
+      register: dhcp_web_copy
 
     - name: Copy systemd service files
       copy:
@@ -132,41 +195,41 @@
       loop:
         - dhcp_assign_notifier.service
         - dhcp_web.service
-      notify:
-        - reload systemd
-        - restart dhcp_assign_notifier
-        - restart dhcp_web
+      register: unit_copy
 
-    - name: Ensure Python services are enabled and started
+    - name: Reload systemd daemon if service files changed
+      systemd:
+        daemon_reload: yes
+      when: unit_copy.changed
+
+    - name: Ensure dhcp_web service is enabled and started
       service:
-        name: "{{ item }}"
+        name: dhcp_web
         enabled: yes
         state: started
-      loop:
-        - dhcp_assign_notifier
-        - dhcp_web
+      register: dhcp_web_started
+
+    - name: Restart dhcp_web when files changed
+      service:
+        name: dhcp_web
+        state: restarted
+      when: (dhcp_web_copy.changed or unit_copy.changed) and not dhcp_web_started.changed
+
+    - name: Ensure dhcp_assign_notifier service is enabled and started
+      service:
+        name: dhcp_assign_notifier
+        enabled: yes
+        state: started
+      register: notifier_started
+
+    - name: Restart dhcp_assign_notifier when files changed
+      service:
+        name: dhcp_assign_notifier
+        state: restarted
+      when: (notifier_copy.changed or unit_copy.changed) and not notifier_started.changed
 
   handlers:
     - name: restart systemd-resolved
       service:
         name: systemd-resolved
-        state: restarted
-
-    - name: restart dnsmasq
-      service:
-        name: dnsmasq
-        state: restarted
-
-    - name: reload systemd
-      systemd:
-        daemon_reload: yes
-
-    - name: restart dhcp_assign_notifier
-      service:
-        name: dhcp_assign_notifier
-        state: restarted
-
-    - name: restart dhcp_web
-      service:
-        name: dhcp_web
         state: restarted

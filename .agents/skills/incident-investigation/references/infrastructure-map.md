@@ -6,7 +6,7 @@
 
 | エイリアス | FQDN | IP | SSH ユーザー | 主な稼働サービス / コンテナ | 主な設定・確認先 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `dns` | `dns-server.internal` | `10.0.0.2` | `dns` | `dnsmasq`, `dhcp_web` (:80), `dhcp_assign_notifier`, `prometheus-node-exporter` (:9100) | `/etc/dnsmasq.conf`, `/etc/dnsmasq-hosts`, `/var/lib/misc/dnsmasq.leases`, `/home/dns/services/` |
+| `dns` | `dns-server.internal` | `10.0.0.2` | `dns` (Ansible: `root`) | `dnsmasq`, `dhcp_web` (:80), `dhcp_assign_notifier`, `prometheus-node-exporter` (:9100) | `/etc/dnsmasq.conf`, `/etc/dnsmasq-hosts`, `/var/lib/misc/dnsmasq.leases`, `/home/dns/services/` |
 | `dnsfilter` | `dnsfilter.internal` | `10.0.3.8` | `dnsfilter` (Ansible: `root`) | systemd: `dnsfilter` (AdGuard Home, `:3000`, `:53`), `prometheus-node-exporter` (:9100) | `/opt/dnsfilter/conf/AdGuardHome.yaml`, `/opt/dnsfilter/work/`, `/opt/dnsfilter/scripts/update_280blocker.py` |
 | `home` | `home.internal` | `10.0.3.1` | `web` (Ansible: `root`) | `nginx` (:80/:443), `prometheus-node-exporter` (:9100) | `/etc/nginx/sites-available/default`, `/etc/nginx/certs/`, `/var/log/nginx/`, `/var/www/html/dashboard` |
 | `dashboard-ap` | `dashboard-ap.internal` | `10.0.3.9` | `dashboard` (Ansible: `root`) | `back_end_api` (:5000, .NET 10), `prometheus-node-exporter` (:9100) | `/opt/back-end-api-service/`, `journalctl -u back_end_api` |

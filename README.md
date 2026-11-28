@@ -6,12 +6,11 @@ Ansibleを使いネットワークまわりの設定を行う。
 
 ## DNS兼DHCP Server (dns-server)
 
-1. Proxmox VMを作成し、Ubuntuをインストールする（ユーザー名: `dns`、ホスト名: `dns-server`）。
-2. ネットワーク設定を行う。
+1. Proxmox Unprivileged LXC を作成し、Ubuntu 26.04 を適用する（ホスト名: `DnsServer`、MAC: `52:54:00:18:C1:59`）。
+2. ネットワーク・SSH 設定を行う。
     - IPアドレスは `10.0.0.2/20`（Gateway: `10.0.0.1`、DNS: `1.1.1.1, 8.8.8.8`）で固定しておく。
-    - 公開鍵認証で `dns` ユーザーにログインできるようにする。
-        - `dns-server` の `~/.ssh/authorized_keys` に全サーバー共通の公開鍵を保存する。
-        - Ansibleを実行する側の `./ssh_keys/id_ed25519` に秘密鍵を保存する。(OpenSSH形式・全サーバー共通)
+    - 公開鍵認証で `root` ユーザーにログインできるようにする（全サーバー共通の公開鍵を `/root/.ssh/authorized_keys` に保存）。
+    - ローカルから Ansible を実行する場合は `./ssh_keys/id_ed25519` に秘密鍵を保存する。(OpenSSH形式・全サーバー共通)
 
 ## DNS Filter Server (dnsfilter.internal / 現行実装: AdGuard Home)
 
