@@ -8,7 +8,7 @@ Type=simple
 RuntimeDirectory=tailscale
 RuntimeDirectoryMode=0755
 EnvironmentFile=/opt/tailscale/env_file
-ExecStart=/usr/sbin/tailscaled --tun=userspace-networking --state=/opt/tailscale/state/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
+ExecStart=/usr/sbin/tailscaled --tun=userspace-networking --statedir=/opt/tailscale/state --state=/opt/tailscale/state/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
 ExecStartPost=/opt/tailscale/configure-funnel.sh
 Restart=always
 RestartSec=10
